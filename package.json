@@ -1,0 +1,16 @@
+{
+  "name": "generation",
+  "version": "1.0.0",
+  "description": "Typescript code generator from Mermaid Model",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./csharpcodefirstgenerator.js",
+    "dev": "nodemon --exec ts-node ./csharpcodefirstgenerator.ts"
+  },
+  "author": "Phil Webb",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.14.10"
+  }
+}
