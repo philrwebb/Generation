@@ -1,8 +1,8 @@
 export type Class = {
   name: string;
-  inheritance: string;
-  namespace: string;
-  parent: string;
+  inheritance?: Inheritance;
+  namespace?: string;
+  parent?: string;
   attributes: Attribute[];
   isAbstract: boolean;
 };
@@ -10,20 +10,20 @@ export type Class = {
 export type Attribute = {
   name: string;
   type: string;
-  length: number;
-  precision: number;
+  length?: number;
+  precision?: number;
   visibility: Visibility;
 };
 
 export type Association = {
-  name: string;
+  name?: string;
   source: Endpoint;
   target: Endpoint;
 };
 
 export type Endpoint = {
-  multiplicity: string;
-  role: string;
+  multiplicity: '0' | '1' | '*' | 'n';
+  role?: string;
   class: string;
   navagability: boolean;
 };
@@ -32,6 +32,12 @@ export enum Visibility {
   Public = "public",
   Private = "private",
   Protected = "protected",
+}
+
+export enum Inheritance {
+  rollup = "rollup",
+  propagateattributes = "propagateattributes",
+  none = "none",
 }
 
 export type Model = {

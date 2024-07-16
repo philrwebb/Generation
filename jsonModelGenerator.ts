@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Class, Attribute, Association, Endpoint, Visibility, Model } from './model';
+import { Class, Attribute, Association, Endpoint, Visibility, Inheritance, Model } from './genmodel';
 
 const readFileLines = (filePath: string): string[] => {
   const fileContent = fs.readFileSync(filePath, "utf8");
@@ -14,22 +14,25 @@ const processLines = (lines: string[]): Model => {
 
   lines.forEach((line, index) => {
     line = line.replace(/^\s*/, "");
-    if (line.startsWith("note")) {
+    if (line.startsWith("note")) {  
       const tokens = line.split(" ");
       let className = tokens[2];
       let attributestoken = tokens[3].replace(/"/g,'');
       let attributes = attributestoken.split(",");
-      let inheritance = attributes[0].split("=")[1];
+      let inheritance: Inheritance = Inheritance.none;
+      if (attributes.length > 1) {
+        inheritance = attributes[0].split("=")[1] as Inheritance;
+      }
       let namespace = attributes.length > 1 ? attributes[1].split("=")[1] : "";
       let currentClass: Class = {
         name: className,
         inheritance: inheritance,
-        namespace: namespace,
+        namespace: namespace, 
         parent: "",
         attributes: [],
         isAbstract: false,
       };
-      classes.push(currentClass);
+      classes.push(currentClass); 
     }
     if (line.startsWith("class") && !line.startsWith("classDiagram")) {
       let classname = line.split(" ")[1];

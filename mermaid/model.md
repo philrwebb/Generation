@@ -36,12 +36,30 @@ classDiagram
     }
     PersistableBase <|-- Person
 
+    note for Address "inheritance=none,namespace=person"
+    class Address {
+        +string addressLine1
+        +string addressLine2
+        +string addressLine3
+        +string suburb
+        +string postcode
+        +string state
+    }
+    PersistableBase <|-- Address
+
     note for Contact "inheritance=none,namespace=person"
     class Contact {
         +string details
     }
     PersistableBase <|-- Contact
     Person "0" --> "*" Contact
+    Person "0" --> "*" Address
+
+    note for AddressType "inheritance=none,namespace=reference"
+    class AddressType {
+    }
+    ReferenceBase <|-- AddressType
+    Address "*" --> "1" AddressType
 
     note for ContactType "inheritance=none,namespace=reference"
     class ContactType {

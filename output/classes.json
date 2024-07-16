@@ -114,6 +114,57 @@
       "isAbstract": false
     },
     {
+      "name": "Address",
+      "inheritance": "none",
+      "namespace": "person",
+      "parent": "PersistableBase",
+      "attributes": [
+        {
+          "name": "addressLine1",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        },
+        {
+          "name": "addressLine2",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        },
+        {
+          "name": "addressLine3",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        },
+        {
+          "name": "suburb",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        },
+        {
+          "name": "postcode",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "length": 0,
+          "precision": 0,
+          "visibility": "public"
+        }
+      ],
+      "isAbstract": false
+    },
+    {
       "name": "Contact",
       "inheritance": "none",
       "namespace": "person",
@@ -127,6 +178,14 @@
           "visibility": "public"
         }
       ],
+      "isAbstract": false
+    },
+    {
+      "name": "AddressType",
+      "inheritance": "none",
+      "namespace": "reference",
+      "parent": "ReferenceBase",
+      "attributes": [],
       "isAbstract": false
     },
     {
@@ -151,6 +210,36 @@
         "multiplicity": "*",
         "role": "",
         "class": "Contact",
+        "navagability": true
+      }
+    },
+    {
+      "name": "Association_Person_Address",
+      "source": {
+        "multiplicity": "0",
+        "role": "",
+        "class": "Person",
+        "navagability": false
+      },
+      "target": {
+        "multiplicity": "*",
+        "role": "",
+        "class": "Address",
+        "navagability": true
+      }
+    },
+    {
+      "name": "Association_Address_AddressType",
+      "source": {
+        "multiplicity": "*",
+        "role": "",
+        "class": "Address",
+        "navagability": false
+      },
+      "target": {
+        "multiplicity": "1",
+        "role": "",
+        "class": "AddressType",
         "navagability": true
       }
     },
