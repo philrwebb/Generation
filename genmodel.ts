@@ -24,6 +24,7 @@ export type Association = {
 export type Endpoint = {
   multiplicity: '0' | '1' | '*' | 'n';
   role?: string;
+  fkWinner?: boolean;
   class: string;
   navagability: boolean;
 };
