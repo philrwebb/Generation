@@ -30,7 +30,7 @@ const processLines = (lines: string[]): Model => {
         namespace: namespace, 
         parent: "",
         attributes: [],
-        isAbstract: false,
+        isAbstract: false, 
       };
       classes.push(currentClass); 
     }
