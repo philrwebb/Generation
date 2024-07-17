@@ -20,40 +20,52 @@ classDiagram
 
     note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
     class ReferenceBase {
-        +string typeShortDescription
-        +string typeLongDescription
-        +string code
+        +string:50 typeShortDescription
+        +string:150 typeLongDescription
+        +string:10 code
     }
     <<Abstract>> ReferenceBase
     TimeLimitedPersistableBase <|-- ReferenceBase
 
     note for Person "inheritance=rollup,namespace=person"    
     class Person {
-        +string givenNames
-        +string lastName
+        +string:100 givenNames
+        +string:100 lastName
         +date dob
-        +string gender
     }
     PersistableBase <|-- Person
 
+    note for Employee "inheritance=none,namespace=person"
+    class Employee {
+        +string:150 department
+        +date: startDate
+    }
+    Person <|-- Employee
+
     note for Address "inheritance=none,namespace=person"
     class Address {
-        +string addressLine1
-        +string addressLine2
-        +string addressLine3
-        +string suburb
-        +string postcode
-        +string state
+        +string:100 addressLine1
+        +string:100 addressLine2
+        +string:100 addressLine3
+        +string:100 suburb
+        +string:10 postcode
+        +string:10 state
     }
     PersistableBase <|-- Address
 
     note for Contact "inheritance=none,namespace=person"
     class Contact {
-        +string details
+        +string:150 details
     }
     PersistableBase <|-- Contact
     Person "0" --> "*" Contact
     Person "0" --> "*" Address
+
+    note for GenderType "inheritance=none,namespace=reference"
+    class GenderType {
+    }
+    ReferenceBase <|-- GenderType
+    Person "*" --> "1" GenderType
 
     note for AddressType "inheritance=none,namespace=reference"
     class AddressType {

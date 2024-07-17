@@ -43,20 +43,27 @@ const processLines = (lines: string[]): Model => {
         if (nextLine.includes("}")) {
           break;
         }
-        attributeLines.push(nextLine);
-        i++;
+        attributeLines.push(nextLine); 
+        i++; 
       }
       attributeLines.forEach((attributeLine: string) => {
         attributeLine = attributeLine.replace(/^[^a-zA-Z0-9\+\-]+/, "");
         let attrname = attributeLine.split(" ")[1];
+        if (attrname.indexOf(":") > 0)
+          attrname = attributeLine.split(" ")[1].split(":")[0];
         let attrtype = attributeLine.split(" ")[0];
+        let attrlen = 0;
+        if (attrtype.indexOf(":") > 0) {
+          attrtype = attrtype.split(":")[0];
+          attrlen = parseInt(attributeLine.split(":")[1]);
+        }
         let currentClass: Class = classes.find(
           (c) => c.name === classname
         ) as Class;
         let attribute: Attribute = {
           name: attrname,
           type: attrtype.substring(1),
-          length: 0,
+          length: attrlen,
           precision: 0,
           visibility:
             attrtype.substring(0, 1) === "+"
