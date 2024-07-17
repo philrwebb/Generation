@@ -1,13 +1,12 @@
 import fs from "fs";
-import { Class, Attribute, Association, Endpoint, Visibility, Inheritance, Model } from './genmodel';
+import { Class, Attribute, Association, Endpoint, Visibility, Inheritance, Model, serializeClassesToJson, deserializeJsonToClasses, printModel, readFileLines } from './genmodel';
 
-const readFileLines = (filePath: string): string[] => {
-  const fileContent = fs.readFileSync(filePath, "utf8");
-  const lines = fileContent.split(/\r?\n/);
-  const pattern = /^(class|[^`-])/;
-  return lines.filter((line: string) => pattern.test(line));
-};
-
+/**
+ * Processes an array of lines and generates a Model object containing classes and associations.
+ * 
+ * @param lines - An array of strings representing the lines to process.
+ * @returns A Model object containing classes and associations.
+ */
 const processLines = (lines: string[]): Model => {
   const classes: Class[] = [];
   const associations: Association[] = [];
@@ -114,38 +113,28 @@ const processLines = (lines: string[]): Model => {
   const model: Model = { classes, associations };
   return model;
 };
-const printModel = (model: Model) => {
-  model.classes.forEach((c) => {
-    console.log(c);
-    c.attributes.forEach((a) => {
-      console.log(a);
-    });
-  });
-  model.associations.forEach((a) => {
-    console.log(a);
-  });
-};
+const processFile = (filePath: string) : Model => {
+  const pattern: RegExp = /^[\s\t]+/;
+  let lines: string[] = readFileLines(filePath).filter((line: string) => pattern.test(line));
+  let model: Model = processLines(lines);
+  return model;
+}
 
-const serializeClassesToJson = (model: Model, filePath: string) => {
-  const jsonContent = JSON.stringify(model, null, 2);
-  fs.writeFileSync(filePath, jsonContent, "utf8");
-};
+const genModel = (filePath: string, genModelPath: string) => {
+  let model: Model = processFile(filePath)
+  serializeClassesToJson(model, genModelPath);
+}
 
-const deserializeJsonToClasses = (filePath: string): Model => {
-  const jsonContent = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(jsonContent) as Model;
-};
-
-// Main function to execute the process
-const main = () => {
-  const filePath = "./mermaid/model.md"; // Path to the Mermaid markdown file
-  const lines = readFileLines(filePath);
-  let model = processLines(lines);
-  serializeClassesToJson(model, "./output/classes.json");
-  // printClasses(model.classes);
-  console.log("Model json created successfully in /generators/output/classes.json");
-  model = deserializeJsonToClasses("./output/classes.json");
+const testModel = (genModelPath: string) => {
+  let model: Model = deserializeJsonToClasses(genModelPath);
   printModel(model);
+}
+
+const main = () => {
+  const filePath = "./mermaid/model.md";
+  const genModelPath = "./output/genModel.json";
+  genModel(filePath, genModelPath);
+  testModel(genModelPath);
 };
 
 main(); 

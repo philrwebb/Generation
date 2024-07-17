@@ -1,3 +1,5 @@
+import fs from "fs";
+
 export type Class = {
   name: string;
   inheritance?: Inheritance;
@@ -44,4 +46,32 @@ export enum Inheritance {
 export type Model = {
   classes: Class[];
   associations: Association[];
+};
+
+export const serializeClassesToJson = (model: Model, filePath: string) => {
+  const jsonContent = JSON.stringify(model, null, 2);
+  fs.writeFileSync(filePath, jsonContent, "utf8");
+};
+
+export const deserializeJsonToClasses = (filePath: string): Model => {
+  const jsonContent = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(jsonContent) as Model;
+};
+
+export const readFileLines = (filePath: string): string[] => {
+  const fileContent = fs.readFileSync(filePath, "utf8");
+  const lines = fileContent.split(/\r?\n/);
+  return lines;
+};
+
+export const printModel = (model: Model) => {
+  model.classes.forEach((c) => {
+    console.log(c);
+    c.attributes.forEach((a) => {
+      console.log(a);
+    });
+  });
+  model.associations.forEach((a) => {
+    console.log(a);
+  });
 };
