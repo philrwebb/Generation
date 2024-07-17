@@ -1,3 +1,11 @@
+Installation
+============
+```
+git clone
+
+```
+
+
 Code Generation Part 1
 ======================
 Consider how to generate code artefacts from a model representing the data domain of an application.   Code artefacts might include:
