@@ -1,10 +1,12 @@
 Installation
 ============
 ```
-git clone
-
+git clone https://github.com/philrwebb/Generation.git
+cd Generation
+npm install
+tsc -w
+node jsonModelGenerator.js
 ```
-
 
 Code Generation Part 1
 ======================
