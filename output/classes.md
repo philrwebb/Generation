@@ -1,0 +1,1 @@
+First run of the generator will create a classes.json in this folder.
