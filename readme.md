@@ -1,5 +1,9 @@
 Installation
 ============
+The following assumes:
+1. You have node installed;
+2. You have tsc (the typescript compiler).
+
 ```
 git clone https://github.com/philrwebb/Generation.git
 cd Generation
