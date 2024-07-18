@@ -1,9 +1,20 @@
-import fs from "fs";
-import { Class, Attribute, Association, Endpoint, Visibility, Inheritance, Model, serializeClassesToJson, deserializeJsonToClasses, printModel, readFileLines } from './genmodel';
+import {
+  Class,
+  Attribute,
+  Association,
+  Endpoint,
+  Visibility,
+  Inheritance,
+  Model,
+  serializeClassesToJson,
+  deserializeJsonToClasses,
+  printModel,
+  readFileLines,
+} from "./genmodel";
 
 /**
  * Processes an array of lines and generates a Model object containing classes and associations.
- * 
+ *
  * @param lines - An array of strings representing the lines to process.
  * @returns A Model object containing classes and associations.
  */
@@ -13,10 +24,10 @@ const processLines = (lines: string[]): Model => {
 
   lines.forEach((line, index) => {
     line = line.replace(/^\s*/, "");
-    if (line.startsWith("note")) {  
+    if (line.startsWith("note")) {
       const tokens = line.split(" ");
       let className = tokens[2];
-      let attributestoken = tokens[3].replace(/"/g,'');
+      let attributestoken = tokens[3].replace(/"/g, "");
       let attributes = attributestoken.split(",");
       let inheritance: Inheritance = Inheritance.none;
       if (attributes.length > 1) {
@@ -26,12 +37,12 @@ const processLines = (lines: string[]): Model => {
       let currentClass: Class = {
         name: className,
         inheritance: inheritance,
-        namespace: namespace, 
+        namespace: namespace,
         parent: "",
         attributes: [],
-        isAbstract: false, 
+        isAbstract: false,
       };
-      classes.push(currentClass); 
+      classes.push(currentClass);
     }
     if (line.startsWith("class") && !line.startsWith("classDiagram")) {
       let classname = line.split(" ")[1];
@@ -42,8 +53,8 @@ const processLines = (lines: string[]): Model => {
         if (nextLine.includes("}")) {
           break;
         }
-        attributeLines.push(nextLine); 
-        i++; 
+        attributeLines.push(nextLine);
+        i++;
       }
       attributeLines.forEach((attributeLine: string) => {
         attributeLine = attributeLine.replace(/^[^a-zA-Z0-9\+\-]+/, "");
@@ -95,13 +106,17 @@ const processLines = (lines: string[]): Model => {
       let association: Association = {
         name: `Association_${source}_${target}`,
         source: {
-          multiplicity: sourceMultiplicity ? sourceMultiplicity.replace(/"/g,'') : '',
+          multiplicity: sourceMultiplicity
+            ? sourceMultiplicity.replace(/"/g, "")
+            : "",
           role: "",
           class: source,
           navagability: false,
         } as Endpoint,
         target: {
-          multiplicity: targetMultiplicity ? targetMultiplicity.replace(/"/g,'') : '',
+          multiplicity: targetMultiplicity
+            ? targetMultiplicity.replace(/"/g, "")
+            : "",
           role: "",
           class: target,
           navagability: true,
@@ -110,31 +125,33 @@ const processLines = (lines: string[]): Model => {
       associations.push(association);
     }
   });
-  const model: Model = { classes, associations };
+  const model: Model = { modeldate: new Date(), classes, associations };
   return model;
 };
-const processFile = (filePath: string) : Model => {
+const processFile = (filePath: string): Model => {
   const pattern: RegExp = /^[\s\t]+/;
-  let lines: string[] = readFileLines(filePath).filter((line: string) => pattern.test(line));
-  let model: Model = processLines(lines);
-  return model;
-}
+  let lines: string[] = readFileLines(filePath).filter((line: string) =>
+    pattern.test(line)
+  );
+  return processLines(lines);
+};
 
 const genModel = (filePath: string, genModelPath: string) => {
-  let model: Model = processFile(filePath)
+  let model: Model = processFile(filePath);
   serializeClassesToJson(model, genModelPath);
-}
+};
 
 const testModel = (genModelPath: string) => {
   let model: Model = deserializeJsonToClasses(genModelPath);
   printModel(model);
-}
+};
 
 const main = () => {
+  console.log(Date.now());
   const filePath = "./mermaid/model.md";
   const genModelPath = "./output/genModel.json";
   genModel(filePath, genModelPath);
   testModel(genModelPath);
 };
 
-main(); 
+main();

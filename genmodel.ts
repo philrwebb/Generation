@@ -44,6 +44,7 @@ export enum Inheritance {
 }
 
 export type Model = {
+  modeldate: Date,
   classes: Class[];
   associations: Association[];
 };
