@@ -4,7 +4,7 @@ export type Class = {
   name: string;
   inheritance?: Inheritance;
   namespace?: string;
-  parent?: string;
+  parent?: Class;
   attributes: Attribute[];
   isAbstract: boolean;
 };
@@ -27,7 +27,7 @@ export type Endpoint = {
   multiplicity: '0' | '1' | '*' | 'n';
   role?: string;
   fkWinner?: boolean;
-  class: string;
+  class: Class;
   navagability: boolean;
 };
 
@@ -55,6 +55,7 @@ export const serializeClassesToJson = (model: Model, filePath: string) => {
 };
 
 export const deserializeJsonToClasses = (filePath: string): Model => {
+  console.log(`Execution path: ${process.cwd()}`);
   const jsonContent = fs.readFileSync(filePath, "utf8");
   return JSON.parse(jsonContent) as Model;
 };

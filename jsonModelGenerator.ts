@@ -38,7 +38,7 @@ const processLines = (lines: string[]): Model => {
         name: className,
         inheritance: inheritance,
         namespace: namespace,
-        parent: "",
+        parent: {} as Class,
         attributes: [],
         isAbstract: false,
       };
@@ -96,12 +96,15 @@ const processLines = (lines: string[]): Model => {
       let parent = line.split(" ")[0];
       let child = line.split(" ")[2];
       let classToUpdate = classes.find((c) => c.name === child) as Class;
-      classToUpdate.parent = parent;
+      let classToAssignAsParent = classes.find((c) => c.name === parent) as Class;
+      classToUpdate.parent = classToAssignAsParent;
     }
     if (line.includes(" --> ")) {
       let source = line.split(" ")[0];
+      let sourceClass = classes.find((c) => c.name === source) as Class;
       let sourceMultiplicity = line.split(" ")[1];
       let target = line.split(" ")[4];
+      let targetClass = classes.find((c) => c.name === target) as Class;
       let targetMultiplicity = line.split(" ")[3];
       let association: Association = {
         name: `Association_${source}_${target}`,
@@ -110,7 +113,7 @@ const processLines = (lines: string[]): Model => {
             ? sourceMultiplicity.replace(/"/g, "")
             : "",
           role: "",
-          class: source,
+          class: sourceClass,
           navagability: false,
         } as Endpoint,
         target: {
@@ -118,7 +121,7 @@ const processLines = (lines: string[]): Model => {
             ? targetMultiplicity.replace(/"/g, "")
             : "",
           role: "",
-          class: target,
+          class: targetClass,
           navagability: true,
         } as Endpoint,
       };
@@ -136,7 +139,7 @@ const processFile = (filePath: string): Model => {
   return processLines(lines);
 };
 
-const genModel = (filePath: string, genModelPath: string) => {
+export const genModel = (filePath: string, genModelPath: string) => {
   let model: Model = processFile(filePath);
   serializeClassesToJson(model, genModelPath);
 };
