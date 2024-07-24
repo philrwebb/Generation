@@ -77,3 +77,14 @@ export const printModel = (model: Model) => {
     console.log(a);
   });
 };
+
+export const GetParentColumns = (
+  inClass: Class,
+  Attributes: Attribute[] = []
+): Attribute[] => {
+  if (inClass.parent) {
+    Attributes = GetParentColumns(inClass.parent, Attributes);
+  }
+  if (inClass.attributes) Attributes = [...Attributes, ...inClass.attributes];
+  return Attributes;
+};
