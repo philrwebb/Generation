@@ -87,7 +87,45 @@ export type Model = {
 ```
 The Modelling Tool
 ------------------
-[Mermaid](https://mermaid.js.org/syntax/classDiagram.html) is a JavaScript based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.  It has the added benefit of being available for use in Markdown within vscode.  I am using only the (static) class diagram in Mermaid.   The definition for my model is as follows:
+[Mermaid](https://mermaid.js.org/syntax/classDiagram.html) is a JavaScript based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
+
+This is the diagram of the standardised model using this tool:
+
+```mermaid
+classDiagram
+class modelclass {
+    +String name
+    +String inheritance
+    +String namespace
+    +modelclass parent
+    +List~classattribute~ attributes
+    +boolean isAbstract
+}
+class model {
+    +Date modeldate
+    +List~modelclass~ class
+}
+class classattribute {
+    +String name
+    +int type
+    +int length
+    +int precision
+    +visibility visibility
+}
+class visibility {
+    <<enumeration>>
+    Public
+    Private
+    Protected
+    Package
+}
+model "1" --> "0..*" modelclass
+modelclass "1" --> "0..*" classattribute
+classattribute --* visibility
+```
+
+
+It has the added benefit of being available for use in Markdown within vscode.  I am using only the (static) class diagram in Mermaid.   The definition for my model is as follows:
 ``` 
 ---
 Person Model
