@@ -28,5 +28,5 @@ class visibility {
 }
 model "1" --> "0..*" modelclass
 modelclass "1" --> "0..*" classattribute
-attribute --* visibility
+classattribute --* visibility
 ```
