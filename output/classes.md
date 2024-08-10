@@ -27,6 +27,6 @@ class visibility {
     Package
 }
 model "1" --> "0..*" modelclass
-modelclass "1" --> "0..*" attribute
+modelclass "1" --> "0..*" classattribute
 attribute --* visibility
 ```
