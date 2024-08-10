@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-		"module": "Node16",
-		"target": "ES2022",
-		"outDir": "./dist",
-		"lib": [
-			"ES2022"
-		],
+		"module": "ES6",
+		"target": "ES6",
+		"moduleResolution": "node",
+		"outDir": ".",
+		"esModuleInterop": true,
 		"sourceMap": true,
 		"rootDir": ".",
+		"allowSyntheticDefaultImports": true,		
 		"strict": true,
 	},
   "include": [

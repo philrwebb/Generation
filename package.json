@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Typescript code generator from Mermaid Model",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node ./csharpcodefirstgenerator.js",

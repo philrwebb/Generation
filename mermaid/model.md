@@ -16,7 +16,7 @@ classDiagram
         +datetime effTo
     }
     <<Abstract>> TimeLimitedPersistableBase
-    PersistableBase <|-- TimeLimitedPersistableBase
+    TimeLimitedPersistableBase --|> PersistableBase
 
     note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
     class ReferenceBase {
@@ -61,19 +61,19 @@ classDiagram
     Person "0" --> "*" Contact
     Person "0" --> "*" Address
 
-    note for GenderType "inheritance=none,namespace=reference"
+    note for GenderType "inheritance=none,namespace=referencedata"
     class GenderType {
     }
     ReferenceBase <|-- GenderType
     Person "*" --> "1" GenderType
 
-    note for AddressType "inheritance=none,namespace=reference"
+    note for AddressType "inheritance=none,namespace=referencedata"
     class AddressType {
     }
     ReferenceBase <|-- AddressType
     Address "*" --> "1" AddressType
 
-    note for ContactType "inheritance=none,namespace=reference"
+    note for ContactType "inheritance=none,namespace=referencedata"
     class ContactType {
     }
     ReferenceBase <|-- ContactType

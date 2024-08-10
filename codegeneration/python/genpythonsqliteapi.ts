@@ -11,7 +11,9 @@ import {
   GetParentColumns,
 } from "../../genmodel";
 
+// change the imports and declarations so that it is a function and allows for variables to be passed in for the app.config settings 
 let importsanddeclarations: string[] = [
+  "#imports and declarations \n",
   "import base64 \n",
   "from flask import Flask, request, send_file, jsonify \n",
   "from io import BytesIO \n",
@@ -51,16 +53,29 @@ let attributeDef = (attribute: Attribute): string => {
 
 let classDef = (klass: Class): string[] => {
   return [
+
+    `\n\n# ${klass.name} \n`,
     `class ${klass.name}(db.Model): \n`,
     `\t__tablename__ = "${klass.name}" \n`,
   ];
 };
+
+const genOneClass = (klass: Class): string[] => {
+  let classScript = classDef(klass);
+  let attributeScripts: string[] = [];
+  for (let attribute of klass.attributes) {
+    attributeScripts.push(attributeDef(attribute));
+  }
+  return classScript.concat(attributeScripts);
+
+}
 
 const genapi = (): string => {
   let tableScript = "";
   const genModelPath = "./output/genModel.json";
   const codeLines: { [key: string]: string[] } = {};
   codeLines["imports"] = importsanddeclarations;
+  let classScript: string[] = [];
   // const fkclasses: { [key: string]: string[] } = {};
   const model = deserializeJsonToClasses(genModelPath);
   for (const c of model.classes) {
@@ -68,26 +83,14 @@ const genapi = (): string => {
       continue;
     }
     c.attributes = GetParentColumns(c);
+    codeLines["imports"]= codeLines["imports"].concat(genOneClass(c));
+    classScript = genOneClass(c);
   }
   console.log(codeLines["imports"].join(""));
 
   return "";
 };
 
-console.log(
-  classDef({
-    name: "Person",
-    attributes: [{ name: "id", type: "number" }] as Attribute[],
-  } as Class)[0],
-  classDef({
-    name: "Person",
-    attributes: [{ name: "id", type: "number" }] as Attribute[],
-  } as Class)[1]
-);
-
-// console.log(attributeDef({name: "id", type: "number"} as Attribute));
-// console.log(attributeDef({name: "name", type: "string", length: 50} as Attribute));
-// console.log(attributeDef({name: "age", type: "number"} as Attribute));
 const main = () => {
     console.log(genapi());
   };

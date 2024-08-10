@@ -12,13 +12,13 @@ import {
 
 const CreateTableTemplate = (tableName: string, columns: string[]):string => {
   return `
-CREATE TABLE IF NOT EXISTS ${tableName} (
+CREATE TABLE ${tableName} (
 \t${columns.join(",\n\t")}
 );\n`;
 };
 
 const primarykey = (columnName: string) => {
-  return `${columnName} INTEGER PRIMARY KEY`;
+  return `${columnName} int identity(1,1) primary key`;
 };
 
 const foreignkey = (

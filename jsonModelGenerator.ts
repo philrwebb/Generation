@@ -10,7 +10,7 @@ import {
   deserializeJsonToClasses,
   printModel,
   readFileLines,
-} from "./genmodel";
+} from "./genmodel.js";
 
 /**
  * Processes an array of lines and generates a Model object containing classes and associations.
@@ -92,11 +92,22 @@ const processLines = (lines: string[]): Model => {
       let classToUpdate = classes.find((c) => c.name === classname) as Class;
       classToUpdate.isAbstract = true;
     }
-    if (line.includes("<|--")) {
-      let parent = line.split(" ")[0];
-      let child = line.split(" ")[2];
+    if (line.includes("<|--") || line.includes("--|>")) {
+      let parent = "";
+      let child = "";
+      if (line.includes("<|--")) {
+        parent = line.split(" ")[0];
+        child = line.split(" ")[2];
+      } else {
+        parent = line.split(" ")[2];
+        child = line.split(" ")[0];
+      }
       let classToUpdate = classes.find((c) => c.name === child) as Class;
-      let classToAssignAsParent = classes.find((c) => c.name === parent) as Class;
+      let classToAssignAsParent = classes.find(
+        (c) => c.name === parent
+      ) as Class;
+      classToUpdate.parent = classToAssignAsParent;
+
       classToUpdate.parent = classToAssignAsParent;
     }
     if (line.includes(" --> ")) {
