@@ -24,7 +24,7 @@ export type Association = {
 };
 
 export type Endpoint = {
-  multiplicity: '0' | '1' | '*' | 'n';
+  multiplicity: "0" | "1" | "*" | "n";
   role?: string;
   fkWinner?: boolean;
   class: Class;
@@ -44,7 +44,7 @@ export enum Inheritance {
 }
 
 export type Model = {
-  modeldate: Date,
+  modeldate: Date;
   classes: Class[];
   associations: Association[];
 };
@@ -87,4 +87,8 @@ export const GetParentColumns = (
   }
   if (inClass.attributes) Attributes = [...Attributes, ...inClass.attributes];
   return Attributes;
+};
+
+export const FindClass = (className: string, classes: Class[]): Class => {
+  return classes.find((c) => c.name === className) as Class;
 };

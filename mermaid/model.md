@@ -1,4 +1,4 @@
-``` mermaid
+```mermaid
 ---
 Person Model
 ---
@@ -27,7 +27,7 @@ classDiagram
     <<Abstract>> ReferenceBase
     TimeLimitedPersistableBase <|-- ReferenceBase
 
-    note for Person "inheritance=rollup,namespace=person"    
+    note for Person "inheritance=rollup,namespace=person"
     class Person {
         +string:100 givenNames
         +string:100 lastName
@@ -77,6 +77,6 @@ classDiagram
     class ContactType {
     }
     ReferenceBase <|-- ContactType
-    Contact "*" --> "1" ContactType
+    Contact "0..*" --> "0..1" ContactType
 
 ```

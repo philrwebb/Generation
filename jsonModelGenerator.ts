@@ -10,7 +10,123 @@ import {
   deserializeJsonToClasses,
   printModel,
   readFileLines,
+  FindClass,
 } from "./genmodel.js";
+
+const handleClass = (line: string): Class => {
+  const tokens = line.split(" ");
+  let className = tokens[2];
+  let attributestoken = tokens[3].replace(/"/g, "");
+  let attributes = attributestoken.split(",");
+  let inheritance: Inheritance = Inheritance.none;
+  if (attributes.length > 1) {
+    inheritance = attributes[0].split("=")[1] as Inheritance;
+  }
+  let namespace = attributes.length > 1 ? attributes[1].split("=")[1] : "";
+  let currentClass: Class = {
+    name: className,
+    inheritance: inheritance,
+    namespace: namespace,
+    parent: {} as Class,
+    attributes: [],
+    isAbstract: false,
+  };
+  return currentClass;
+};
+
+const readAttributeLines = (index: number, lines: string[]): string[] => {
+  let attributeLines: string[] = [];
+  let i = index + 1;
+  while (true) {
+    let nextLine: string = lines[i];
+    if (nextLine.includes("}")) {
+      break;
+    }
+    attributeLines.push(nextLine);
+    i++;
+  }
+  return attributeLines;
+};
+
+const loadClassAttributes = (
+  theclass: Class,
+  attributeLines: string[]
+): Class => {
+  const attributePattern =
+    /^(?<visibility>[+\-#])(?<type>[a-zA-Z]+)(?::(?<length>\d+)(?:,(?<precision>\d+))?)?\s+(?<name>[a-zA-Z0-9_]+)$/;
+  attributeLines.forEach((attributeLine: string) => {
+    attributeLine = attributeLine.replace(/^[^a-zA-Z0-9\+\-]+/, "");
+    const match = attributeLine.match(attributePattern);
+
+    if (match && match.groups) {
+      const { visibility, type, length, precision, name } = match.groups;
+      let attribute: Attribute = {
+        name: name,
+        type: type,
+        length: length ? parseInt(length) : 0,
+        precision: precision ? parseInt(precision) : 0,
+        visibility:
+          visibility === "+"
+            ? Visibility.Public
+            : visibility === "-"
+            ? Visibility.Private
+            : visibility === "#"
+            ? Visibility.Protected
+            : Visibility.Public,
+      };
+      theclass.attributes.push(attribute);
+    }
+  });
+  return theclass;
+};
+
+const processInheritanceLine = (line: string, classes: Class[]) => {
+  let parent = "";
+  let child = "";
+  if (line.includes("<|--")) {
+    parent = line.split(" ")[0];
+    child = line.split(" ")[2];
+  } else {
+    parent = line.split(" ")[2];
+    child = line.split(" ")[0];
+  }
+  let classToUpdate: Class = FindClass(child, classes);
+  let classToAssignAsParent: Class = FindClass(parent, classes);
+  classToUpdate.parent = classToAssignAsParent;
+};
+
+const processOneWayAssociationLine = (
+  line: string,
+  classes: Class[]
+): Association => {
+  let source: string = line.split(" ")[0];
+  let sourceClass: Class = FindClass(source, classes);
+  let sourceMultiplicity: string = line.split(" ")[1];
+  let target: string = line.split(" ")[4];
+  let targetClass: Class = FindClass(target, classes);
+  let targetMultiplicity: string = line.split(" ")[3];
+  let association: Association = {
+    name: `Association_${source}_${target}`,
+    source: {
+      multiplicity: sourceMultiplicity
+        ? sourceMultiplicity.replace(/"/g, "")
+        : "",
+      role: "",
+      class: sourceClass,
+      navagability: false,
+    } as Endpoint,
+    target: {
+      multiplicity: targetMultiplicity
+        ? targetMultiplicity.replace(/"/g, "")
+        : "",
+      role: "",
+      class: targetClass,
+      navagability: true,
+    } as Endpoint,
+  };
+  return association;
+  // associations.push(association);
+};
 
 /**
  * Processes an array of lines and generates a Model object containing classes and associations.
@@ -18,124 +134,44 @@ import {
  * @param lines - An array of strings representing the lines to process.
  * @returns A Model object containing classes and associations.
  */
-const processLines = (lines: string[]): Model => {
+const processAllLines = (lines: string[]): Model => {
   const classes: Class[] = [];
   const associations: Association[] = [];
+  const classLinePattern = /^class(?!Diagram)/;
+  const inheritanceLinePattern = /<\|--|--\|>/;
+  const oneWayAssociationLinePattern = / --> /;
 
   lines.forEach((line, index) => {
     line = line.replace(/^\s*/, "");
-    if (line.startsWith("note")) {
-      const tokens = line.split(" ");
-      let className = tokens[2];
-      let attributestoken = tokens[3].replace(/"/g, "");
-      let attributes = attributestoken.split(",");
-      let inheritance: Inheritance = Inheritance.none;
-      if (attributes.length > 1) {
-        inheritance = attributes[0].split("=")[1] as Inheritance;
+    const noteLinePattern = /^note/;
+    if (noteLinePattern.test(line)) {
+      let currentClass: Class = handleClass(line);
+      if (currentClass) {
+        classes.push(currentClass);
       }
-      let namespace = attributes.length > 1 ? attributes[1].split("=")[1] : "";
-      let currentClass: Class = {
-        name: className,
-        inheritance: inheritance,
-        namespace: namespace,
-        parent: {} as Class,
-        attributes: [],
-        isAbstract: false,
-      };
-      classes.push(currentClass);
     }
-    if (line.startsWith("class") && !line.startsWith("classDiagram")) {
+    if (classLinePattern.test(line)) {
       let classname = line.split(" ")[1];
-      let attributeLines: string[] = [];
-      let i = index + 1;
-      while (true) {
-        let nextLine: string = lines[i];
-        if (nextLine.includes("}")) {
-          break;
-        }
-        attributeLines.push(nextLine);
-        i++;
-      }
-      attributeLines.forEach((attributeLine: string) => {
-        attributeLine = attributeLine.replace(/^[^a-zA-Z0-9\+\-]+/, "");
-        let attrname = attributeLine.split(" ")[1];
-        if (attrname.indexOf(":") > 0)
-          attrname = attributeLine.split(" ")[1].split(":")[0];
-        let attrtype = attributeLine.split(" ")[0];
-        let attrlen = 0;
-        if (attrtype.indexOf(":") > 0) {
-          attrtype = attrtype.split(":")[0];
-          attrlen = parseInt(attributeLine.split(":")[1]);
-        }
-        let currentClass: Class = classes.find(
-          (c) => c.name === classname
-        ) as Class;
-        let attribute: Attribute = {
-          name: attrname,
-          type: attrtype.substring(1),
-          length: attrlen,
-          precision: 0,
-          visibility:
-            attrtype.substring(0, 1) === "+"
-              ? Visibility.Public
-              : attrtype.substring(0, 1) === "-"
-              ? Visibility.Private
-              : attrtype.substring(0, 1) === "#"
-              ? Visibility.Protected
-              : Visibility.Public,
-        };
-        currentClass.attributes.push(attribute);
-      });
+      let attributeLines: string[] = readAttributeLines(index, lines);
+      let currentClass: Class = FindClass(classname, classes);
+      currentClass = loadClassAttributes(currentClass, attributeLines);
     }
-    if (line.startsWith("<<Abstract>>")) {
-      let classname = line.split(" ")[1];
-      let classToUpdate = classes.find((c) => c.name === classname) as Class;
+    const abstractLinePattern = /<<Abstract>>/;
+    if (abstractLinePattern.test(line)) {
+      let classname: string = line.split(" ")[1];
+      let classToUpdate: Class = FindClass(classname, classes);
       classToUpdate.isAbstract = true;
     }
-    if (line.includes("<|--") || line.includes("--|>")) {
-      let parent = "";
-      let child = "";
-      if (line.includes("<|--")) {
-        parent = line.split(" ")[0];
-        child = line.split(" ")[2];
-      } else {
-        parent = line.split(" ")[2];
-        child = line.split(" ")[0];
-      }
-      let classToUpdate = classes.find((c) => c.name === child) as Class;
-      let classToAssignAsParent = classes.find(
-        (c) => c.name === parent
-      ) as Class;
-      classToUpdate.parent = classToAssignAsParent;
 
-      classToUpdate.parent = classToAssignAsParent;
+    if (inheritanceLinePattern.test(line)) {
+      processInheritanceLine(line, classes);
     }
-    if (line.includes(" --> ")) {
-      let source = line.split(" ")[0];
-      let sourceClass = classes.find((c) => c.name === source) as Class;
-      let sourceMultiplicity = line.split(" ")[1];
-      let target = line.split(" ")[4];
-      let targetClass = classes.find((c) => c.name === target) as Class;
-      let targetMultiplicity = line.split(" ")[3];
-      let association: Association = {
-        name: `Association_${source}_${target}`,
-        source: {
-          multiplicity: sourceMultiplicity
-            ? sourceMultiplicity.replace(/"/g, "")
-            : "",
-          role: "",
-          class: sourceClass,
-          navagability: false,
-        } as Endpoint,
-        target: {
-          multiplicity: targetMultiplicity
-            ? targetMultiplicity.replace(/"/g, "")
-            : "",
-          role: "",
-          class: targetClass,
-          navagability: true,
-        } as Endpoint,
-      };
+
+    if (oneWayAssociationLinePattern.test(line)) {
+      const association: Association = processOneWayAssociationLine(
+        line,
+        classes
+      );
       associations.push(association);
     }
   });
@@ -147,7 +183,7 @@ const processFile = (filePath: string): Model => {
   let lines: string[] = readFileLines(filePath).filter((line: string) =>
     pattern.test(line)
   );
-  return processLines(lines);
+  return processAllLines(lines);
 };
 
 export const genModel = (filePath: string, genModelPath: string) => {
