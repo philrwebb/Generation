@@ -14,23 +14,24 @@ import {
 } from "./genmodel.js";
 
 const handleClass = (line: string): Class => {
-  const tokens = line.split(" ");
-  let className = tokens[2];
-  let attributestoken = tokens[3].replace(/"/g, "");
-  let attributes = attributestoken.split(",");
-  let inheritance: Inheritance = Inheritance.none;
-  if (attributes.length > 1) {
-    inheritance = attributes[0].split("=")[1] as Inheritance;
+  const pattern = /note for (\w+) "(?:inheritance=(\w+),)?namespace=(\w+)"/;
+  const match = line.match(pattern);
+
+  if (!match) {
+    throw new Error("Line does not match the expected pattern");
   }
-  let namespace = attributes.length > 1 ? attributes[1].split("=")[1] : "";
+
+  const [, className, inheritance = "none", namespace] = match;
+
   let currentClass: Class = {
     name: className,
-    inheritance: inheritance,
+    inheritance: inheritance as Inheritance,
     namespace: namespace,
     parent: {} as Class,
     attributes: [],
     isAbstract: false,
   };
+
   return currentClass;
 };
 
@@ -81,18 +82,41 @@ const loadClassAttributes = (
 };
 
 const processInheritanceLine = (line: string, classes: Class[]) => {
+  const pattern = /(\w+)\s+(<\|--|--\|>)\s+(\w+)/;
+  const match = line.match(pattern);
+
+  if (!match) {
+    throw new Error("Line does not match the expected pattern");
+  }
+
+  const [, class1, relationship, class2] = match;
+
   let parent = "";
   let child = "";
-  if (line.includes("<|--")) {
-    parent = line.split(" ")[0];
-    child = line.split(" ")[2];
-  } else {
-    parent = line.split(" ")[2];
-    child = line.split(" ")[0];
+
+  if (relationship === "<|--") {
+    parent = class1;
+    child = class2;
+  } else if (relationship === "--|>") {
+    parent = class2;
+    child = class1;
   }
+
   let classToUpdate: Class = FindClass(child, classes);
   let classToAssignAsParent: Class = FindClass(parent, classes);
   classToUpdate.parent = classToAssignAsParent;
+  // let parent = "";
+  // let child = "";
+  // if (line.includes("<|--")) {
+  //   parent = line.split(" ")[0];
+  //   child = line.split(" ")[2];
+  // } else {
+  //   parent = line.split(" ")[2];
+  //   child = line.split(" ")[0];
+  // }
+  // let classToUpdate: Class = FindClass(child, classes);
+  // let classToAssignAsParent: Class = FindClass(parent, classes);
+  // classToUpdate.parent = classToAssignAsParent;
 };
 
 const processOneWayAssociationLine = (

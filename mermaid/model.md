@@ -73,7 +73,7 @@ classDiagram
     ReferenceBase <|-- AddressType
     Address "*" --> "1" AddressType
 
-    note for ContactType "inheritance=none,namespace=referencedata"
+    note for ContactType "namespace=referencedata"
     class ContactType {
     }
     ReferenceBase <|-- ContactType
