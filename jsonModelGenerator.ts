@@ -18,7 +18,7 @@ const handleClass = (line: string): Class => {
   const match = line.match(pattern);
 
   if (!match) {
-    throw new Error("Line does not match the expected pattern");
+    throw new Error("Line does not match the expected pattern ");
   }
 
   const [, className, inheritance = "none", namespace] = match;

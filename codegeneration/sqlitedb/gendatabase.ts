@@ -8,9 +8,10 @@ import {
   Model,
   serializeClassesToJson,
   deserializeJsonToClasses,
+  WriteFile,
 } from "../../genmodel.js";
 
-const CreateTableTemplate = (tableName: string, columns: string[]):string => {
+const CreateTableTemplate = (tableName: string, columns: string[]): string => {
   return `
 CREATE TABLE IF NOT EXISTS ${tableName} (
 \t${columns.join(",\n\t")}
@@ -44,13 +45,13 @@ const colDef = (columnName: string, columnType: string) => {
 };
 
 export const genDatabase = (): string => {
-  let tableScript = "";  
+  let tableScript = "";
   const genModelPath = "./output/genModel.json";
   const classes: { [key: string]: string[] } = {};
   const fkclasses: { [key: string]: string[] } = {};
   const model = deserializeJsonToClasses(genModelPath);
   // pull in the parent hierarchy attributes
-  for (const c of model.classes) { 
+  for (const c of model.classes) {
     if (c.isAbstract) {
       continue;
     }
@@ -138,8 +139,7 @@ const GetParentColumns = (
 };
 
 const main = () => {
-  console.log(genDatabase());
+  WriteFile("./output", "genDBSqlite.sql", genDatabase());
 };
 
-main (
-);
+main();

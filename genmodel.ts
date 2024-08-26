@@ -1,4 +1,5 @@
 import fs from "fs";
+import * as path from "path";
 
 export type Class = {
   name: string;
@@ -91,4 +92,13 @@ export const GetParentColumns = (
 
 export const FindClass = (className: string, classes: Class[]): Class => {
   return classes.find((c) => c.name === className) as Class;
+};
+
+export const WriteFile = (
+  folderPath: string,
+  fileName: string,
+  content: string
+) => {
+  const filePath = path.join(folderPath, fileName);
+  fs.writeFileSync(filePath, content, "utf8");
 };

@@ -1,6 +1,7 @@
-Installation
-============
+# Installation
+
 The following assumes:
+
 1. You have node installed;
 2. You have tsc (the typescript compiler).
 
@@ -12,31 +13,30 @@ tsc -w
 node jsonModelGenerator.js
 ```
 
-Code Generation Part 1
-======================
-Consider how to generate code artefacts from a model representing the data domain of an application.   Code artefacts might include:
+# Code Generation Part 1
 
-* Database persistance code (for sqlite | sqlserver | oracle | postgres . . .), 
-* Back-end persistence code (for dotnet | nodejs | php . . .), 
-* Back-end api (for dotnet | nodejs | php . . .) 
-* Front-end services to consume the api (for angular | svelte | react | vue . . .)
-* Documentation for your model.
+Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts might include:
 
-There is no guarantee that the selected modelling tool will always be supported so you need a way to move the model to a new tool with a minimum impact on the application.    
+- Database persistance code (for sqlite | sqlserver | oracle | postgres . . .),
+- Back-end persistence code (for dotnet | nodejs | php . . .),
+- Back-end api (for dotnet | nodejs | php . . .)
+- Front-end services to consume the api (for angular | svelte | react | vue . . .)
+- Documentation for your model.
+
+There is no guarantee that the selected modelling tool will always be supported so you need a way to move the model to a new tool with a minimum impact on the application.
 
 What is the best approach?
 
-I propose a two step approach that will insulate code generation from changes to the underlying modelling tool so that you only have to write your code generation once.   The steps are:
+I propose a two step approach that will insulate code generation from changes to the underlying modelling tool so that you only have to write your code generation once. The steps are:
 
 1. Generate a 'standarised' version of your model that contains all of the information necessary to generate the code artefacts outlined above.
 2. Use the 'standardised' version to generate those code artefacts.
 
-It is worth noting that generation of code from a model describing the system supports the DRY principle of coding (Don't Repeat Yourself).   
+It is worth noting that generation of code from a model describing the system supports the DRY principle of coding (Don't Repeat Yourself).
 
-The Standardised Model Types
-----------------------------
+## The Standardised Model Types
 
-``` typescript
+```typescript
 export type Class = {
   name: string;
   inheritance?: Inheritance;
@@ -61,7 +61,7 @@ export type Association = {
 };
 
 export type Endpoint = {
-  multiplicity: '0' | '1' | '*' | 'n';
+  multiplicity: "0" | "1" | "*" | "n";
   role?: string;
   fkWinner?: boolean;
   class: string;
@@ -85,8 +85,9 @@ export type Model = {
   associations: Association[];
 };
 ```
-The Modelling Tool
-------------------
+
+## The Modelling Tool
+
 [Mermaid](https://mermaid.js.org/syntax/classDiagram.html) is a JavaScript based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
 
 This is the diagram of the standardised model using this tool:
@@ -120,13 +121,14 @@ class visibility {
     Package
 }
 model "1" --> "0..*" modelclass
+modelclass "*" --> "1" modelclass: parent
 modelclass "1" --> "0..*" classattribute
 classattribute --* visibility
 ```
 
+It has the added benefit of being available for use in Markdown within vscode. I am using only the (static) class diagram in Mermaid. The definition for my model is as follows:
 
-It has the added benefit of being available for use in Markdown within vscode.  I am using only the (static) class diagram in Mermaid.   The definition for my model is as follows:
-``` 
+```
 ---
 Person Model
 ---
@@ -155,7 +157,7 @@ classDiagram
     <<Abstract>> ReferenceBase
     TimeLimitedPersistableBase <|-- ReferenceBase
 
-    note for Person "inheritance=rollup,namespace=person"    
+    note for Person "inheritance=rollup,namespace=person"
     class Person {
         +string:100 givenNames
         +string:100 lastName
@@ -207,8 +209,10 @@ classDiagram
     ReferenceBase <|-- ContactType
     Contact "*" --> "1" ContactType
 ```
+
 Which renders like this:
-``` mermaid
+
+```mermaid
 ---
 Person Model
 ---
@@ -237,7 +241,7 @@ classDiagram
     <<Abstract>> ReferenceBase
     TimeLimitedPersistableBase <|-- ReferenceBase
 
-    note for Person "inheritance=rollup,namespace=person"    
+    note for Person "inheritance=rollup,namespace=person"
     class Person {
         +string:100 givenNames
         +string:100 lastName
@@ -289,19 +293,20 @@ classDiagram
     ReferenceBase <|-- ContactType
     Contact "*" --> "1" ContactType
 ```
+
 This model defines some base types:
 
 1. Abstract class PersistableBase which holds a couple of fields needed by all classes in the system - id and active (a boolean flag to support logical deletion)
 2. Abstract class TimeLimitedPersistableBase inheriting from PersistableBase which is for inheriting types that need an effective from and effective to datetime
 3. Abstract class ReferenceBase inheriting from TimeLimitedPersistableBase which is for inheriting types that are reference data and have a short and long description and code.
 
-Because I will eventually need to create a relational database to represent concrete classes in my system and also because Mermaid does not let me otherwise specify how children will inherit from their parent, I have used the mermaid note to include a 'property collection' which includes inheritance and namespace.    For these Abstract classes (there will never be an concrete class instantiated), the inheritance is set to propagateattributes which means any inheritors will get the attributes from the parent class.   So all inheritors of PersistableBase will get an id and an active flag.  An inheritor of TimeLimitedPersistableBase will get effFrom and effTo as well as active and id that are propagated from PersistableBase.   ReferenceBase will get longDescription, shortDescription, code, effFrom, effTo, id and active
+Because I will eventually need to create a relational database to represent concrete classes in my system and also because Mermaid does not let me otherwise specify how children will inherit from their parent, I have used the mermaid note to include a 'property collection' which includes inheritance and namespace. For these Abstract classes (there will never be a concrete class instantiated), the inheritance is set to propagateattributes which means any inheritors will get the attributes from the parent class. So all inheritors of PersistableBase will get an id and an active flag. An inheritor of TimeLimitedPersistableBase will get effFrom and effTo as well as active and id that are propagated from PersistableBase. ReferenceBase will get longDescription, shortDescription, code, effFrom, effTo, id and active
 
-The first concrete class in this model is Person.    Person will have an id and active flag (because it inherits from PersistableBase) and additionally: givenNames, lastName, dob.   Person is associated with Contact (0..*) and with GenderType (*..1).   These associations are also described in the text version of the model.
+The first concrete class in this model is Person. Person will have an id and active flag (because it inherits from PersistableBase) and additionally: givenNames, lastName, dob. Person is associated with Contact (0.._) and with GenderType (_..1). These associations are also described in the text version of the model.
 
-The code to generate a standardised json model is in jsonModelGenerator.ts in this project.   The type definitions for this json model are contained within genmodel.ts.
+The code to generate a standardised json model is in jsonModelGenerator.ts in this project. The type definitions for this json model are contained within genmodel.ts.
 
-The standardised json version of this model is as follows.   There is enough information here to:
+The standardised json version of this model is as follows. There is enough information here to:
 
 1. Generate the DDL to create a Database
 2. Generate the DML to CRUD maintain this Database
@@ -310,6 +315,7 @@ The standardised json version of this model is as follows.   There is enough inf
 5. Generate the frontend services to consume the API
 
 You can late-bind on the language/framework to use and easily change between frameworks and even move to different DB systems.
+
 ```json
 {
   "classes": [

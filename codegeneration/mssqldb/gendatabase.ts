@@ -2,15 +2,11 @@ import {
   Class,
   Attribute,
   Association,
-  Endpoint,
-  Visibility,
-  Inheritance,
-  Model,
-  serializeClassesToJson,
   deserializeJsonToClasses,
+  WriteFile,
 } from "../../genmodel.js";
 
-const CreateTableTemplate = (tableName: string, columns: string[]):string => {
+const CreateTableTemplate = (tableName: string, columns: string[]): string => {
   return `
 CREATE TABLE ${tableName} (
 \t${columns.join(",\n\t")}
@@ -26,7 +22,7 @@ const foreignkey = (
   referenceTable: string,
   referenceColumn: string
 ) => {
-  return `FOREIGN KEY(${columnName}) REFERENCES ${referenceTable.toUpperCase()} (id) ON DELETE RESTRICT ON UPDATE NO ACTION`;
+  return `${columnName} int`;
 };
 
 const stringColdef = (
@@ -44,13 +40,13 @@ const colDef = (columnName: string, columnType: string) => {
 };
 
 export const genDatabase = (): string => {
-  let tableScript = "";  
+  let tableScript = "";
   const genModelPath = "./output/genModel.json";
   const classes: { [key: string]: string[] } = {};
   const fkclasses: { [key: string]: string[] } = {};
   const model = deserializeJsonToClasses(genModelPath);
   // pull in the parent hierarchy attributes
-  for (const c of model.classes) { 
+  for (const c of model.classes) {
     if (c.isAbstract) {
       continue;
     }
@@ -89,13 +85,13 @@ export const genDatabase = (): string => {
         classes[c.name].push(
           colDef(association.target.class.name + "_id", "INTEGER")
         );
-        fkclasses[c.name].push(
-          foreignkey(
-            association.target.class.name + "_id",
-            association.target.class.name,
-            "id"
-          )
-        );
+        // fkclasses[c.name].push(
+        //   foreignkey(
+        //     association.target.class.name + "_id",
+        //     association.target.class.name,
+        //     "id"
+        //   )
+        // );
         continue;
       }
       if (
@@ -106,13 +102,13 @@ export const genDatabase = (): string => {
         classes[association.target.class.name].push(
           colDef(association.source.class.name + "_id", "INTEGER")
         );
-        fkclasses[association.target.class.name].push(
-          foreignkey(
-            association.source.class.name + "_id",
-            association.source.class.name,
-            "id"
-          )
-        );
+        // fkclasses[association.target.class.name].push(
+        //   foreignkey(
+        //     association.source.class.name + "_id",
+        //     association.source.class.name,
+        //     "id"
+        //   )
+        // );
       }
     }
   }
@@ -138,8 +134,8 @@ const GetParentColumns = (
 };
 
 const main = () => {
+  WriteFile("./output", "genDBSql.sql", genDatabase());
   console.log(genDatabase());
 };
 
-main (
-);
+main();
