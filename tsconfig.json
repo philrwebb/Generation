@@ -15,6 +15,7 @@
   ],
   "exclude": [
     "node_modules", // Commonly excluded to avoid compiling external modules
-    "dist" // Exclude compiled output directory if applicable
+    "dist", // Exclude compiled output directory if applicable
+    "**/test.ts"
   ]
 }
