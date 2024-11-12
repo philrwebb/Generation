@@ -15,7 +15,7 @@ node jsonModelGenerator.js
 
 # Code Generation Part 1
 
-Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts might include:
+Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
 
 - Database persistance code (for sqlite | sqlserver | oracle | postgres . . .),
 - Back-end persistence code (for dotnet | nodejs | php . . .),
