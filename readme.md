@@ -127,7 +127,7 @@ modelclass "1" --> "0..*" classattribute
 classattribute --* visibility
 ```
 
-It has the added benefit of being available for use in Markdown within vscode. I am using only the (static) class diagram in Mermaid. The definition for my model is as follows:
+It has the added benefit of being available for use in Markdown within vscode. I am using only the (static) class diagram in Mermaid. The definition for the model above is as follows:
 
 ```
 ---
