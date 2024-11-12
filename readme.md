@@ -21,7 +21,8 @@ Consider how to generate code artefacts from a model representing the data domai
 - Back-end persistence code (for dotnet | nodejs | php . . .),
 - Back-end api (for dotnet | nodejs | php . . .)
 - Front-end services to consume the api (for angular | svelte | react | vue . . .)
-- Documentation for your model.
+- Documentation for your model
+- Unit, UI and Integration tests.
 
 There is no guarantee that the selected modelling tool will always be supported so you need a way to move the model to a new tool with a minimum impact on the application.
 
@@ -90,7 +91,7 @@ export type Model = {
 
 [Mermaid](https://mermaid.js.org/syntax/classDiagram.html) is a JavaScript based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
 
-This is the diagram of the standardised model using this tool:
+This is the diagram of the standardised model described using Mermaid:
 
 ```mermaid
 classDiagram
