@@ -1,5 +1,5 @@
-import fs from "fs";
-import * as path from "path";
+import fs from 'fs';
+import * as path from 'path';
 
 export type Class = {
   name: string;
@@ -25,7 +25,7 @@ export type Association = {
 };
 
 export type Endpoint = {
-  multiplicity: "0" | "1" | "*" | "n";
+  multiplicity: '0' | '1' | '*' | 'n';
   role?: string;
   fkWinner?: boolean;
   class: Class;
@@ -33,15 +33,15 @@ export type Endpoint = {
 };
 
 export enum Visibility {
-  Public = "public",
-  Private = "private",
-  Protected = "protected",
+  Public = 'public',
+  Private = 'private',
+  Protected = 'protected',
 }
 
 export enum Inheritance {
-  rollup = "rollup",
-  propagateattributes = "propagateattributes",
-  none = "none",
+  rollup = 'rollup',
+  propagateattributes = 'propagateattributes',
+  none = 'none',
 }
 
 export type Model = {
@@ -52,17 +52,17 @@ export type Model = {
 
 export const serializeClassesToJson = (model: Model, filePath: string) => {
   const jsonContent = JSON.stringify(model, null, 2);
-  fs.writeFileSync(filePath, jsonContent, "utf8");
+  fs.writeFileSync(filePath, jsonContent, 'utf8');
 };
 
 export const deserializeJsonToClasses = (filePath: string): Model => {
   console.log(`Execution path: ${process.cwd()}`);
-  const jsonContent = fs.readFileSync(filePath, "utf8");
+  const jsonContent = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(jsonContent) as Model;
 };
 
 export const readFileLines = (filePath: string): string[] => {
-  const fileContent = fs.readFileSync(filePath, "utf8");
+  const fileContent = fs.readFileSync(filePath, 'utf8');
   const lines = fileContent.split(/\r?\n/);
   return lines;
 };
@@ -81,7 +81,7 @@ export const printModel = (model: Model) => {
 
 export const GetParentColumns = (
   inClass: Class,
-  Attributes: Attribute[] = []
+  Attributes: Attribute[] = [],
 ): Attribute[] => {
   if (inClass.parent) {
     Attributes = GetParentColumns(inClass.parent, Attributes);
@@ -97,8 +97,8 @@ export const FindClass = (className: string, classes: Class[]): Class => {
 export const WriteFile = (
   folderPath: string,
   fileName: string,
-  content: string
+  content: string,
 ) => {
   const filePath = path.join(folderPath, fileName);
-  fs.writeFileSync(filePath, content, "utf8");
+  fs.writeFileSync(filePath, content, 'utf8');
 };

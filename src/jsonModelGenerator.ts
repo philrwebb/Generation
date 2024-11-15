@@ -11,7 +11,9 @@ import {
   printModel,
   readFileLines,
   FindClass,
-} from './genmodel.js';
+} from './genmodel';
+
+const parseClassInfo = (line: string) => {};
 
 const handleClass = (line: string): Class => {
   const pattern = /note for (\w+) "(?:inheritance=(\w+),)?namespace=(\w+)"/;

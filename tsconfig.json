@@ -1,21 +1,18 @@
 {
   "compilerOptions": {
-    "module": "ES2015",
+    "module": "commonjs",
     "target": "ES2018",
     "moduleResolution": "node",
-    "outDir": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "esModuleInterop": true,
     "sourceMap": true,
-    "rootDir": ".",
     "allowSyntheticDefaultImports": true,
     "strict": true
   },
-  "include": [
-    "**/*.ts" // Adjust this pattern to match the location of your TypeScript files
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "node_modules", // Commonly excluded to avoid compiling external modules
-    "dist", // Exclude compiled output directory if applicable
-    "**/test.ts"
+    "dist" // Exclude compiled output directory if applicable
   ]
 }
