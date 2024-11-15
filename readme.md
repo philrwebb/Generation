@@ -30,7 +30,7 @@ What is the best approach?
 
 I propose a two step approach that will insulate code generation from changes to the underlying modelling tool so that you only have to write your code generation once. The steps are:
 
-1. Generate a 'standarised' version of your model that contains all of the information necessary to generate the code artefacts outlined above.
+1. Generate a 'standardised' version of your model that contains all of the information necessary to generate the code artefacts outlined above.
 2. Use the 'standardised' version to generate those code artefacts.
 
 It is worth noting that generation of code from a model describing the system supports the DRY principle of coding (Don't Repeat Yourself).
