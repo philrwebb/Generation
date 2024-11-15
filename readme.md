@@ -13,6 +13,41 @@ tsc -w
 node jsonModelGenerator.js
 ```
 
+<pre><code>
+Root/
+├── mermaid/
+│   │   ├── classes.md
+│   │   ├── model.md
+│   │   └── model.mmd  
+├── src/
+│   ├── codegeneration/
+│   │   ├── mssqldb/
+│   │   ├── python/
+│   │   ├── sqlitedb/
+│   │   ├── genmodel.ts
+│   │   └── jsonModelGenerator.ts  
+├── .eslintignore
+├── .gitignore
+├── .prettierignore  
+├── package.json
+├── readme.md
+└── tsconfig.json  
+</code></pre>
+
+# The Project
+## mermaid folder
+contains:
+* classes.md - a mermaid diagram file that describes the underlying meta model that will be the basis for all code generation.
+* model.md - The mermaid diagram file that describes the thing we want to generate
+* model.mmd -
+## src folder
+contains:
+1. genmodel.ts - the typescript types that describe the meta model.
+2. jsonModelGenerator.ts - the typescript code to generate the meta description of our input model.md
+3. folders that contain generators that use the meta description to generate specific code.
+
+As is - you should be able to run npx tsc to build the js (into a dist folder).   You could also npx ts-node ./src/jsonModelGenerator.ts to run the typescript directly.
+
 # Code Generation Part 1
 
 Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
@@ -30,7 +65,7 @@ What is the best approach?
 
 I propose a two step approach that will insulate code generation from changes to the underlying modelling tool so that you only have to write your code generation once. The steps are:
 
-1. Generate a 'standarised' version of your model that contains all of the information necessary to generate the code artefacts outlined above.
+1. Generate a 'standardised' version of your model that contains all of the information necessary to generate the code artefacts outlined above.
 2. Use the 'standardised' version to generate those code artefacts.
 
 It is worth noting that generation of code from a model describing the system supports the DRY principle of coding (Don't Repeat Yourself).
