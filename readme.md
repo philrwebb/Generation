@@ -15,13 +15,14 @@ node jsonModelGenerator.js
 
 # Code Generation Part 1
 
-Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts might include:
+Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
 
 - Database persistance code (for sqlite | sqlserver | oracle | postgres . . .),
 - Back-end persistence code (for dotnet | nodejs | php . . .),
 - Back-end api (for dotnet | nodejs | php . . .)
 - Front-end services to consume the api (for angular | svelte | react | vue . . .)
-- Documentation for your model.
+- Documentation for your model
+- Unit, UI and Integration tests.
 
 There is no guarantee that the selected modelling tool will always be supported so you need a way to move the model to a new tool with a minimum impact on the application.
 
@@ -90,7 +91,7 @@ export type Model = {
 
 [Mermaid](https://mermaid.js.org/syntax/classDiagram.html) is a JavaScript based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
 
-This is the diagram of the standardised model using this tool:
+This is the diagram of the standardised model described using Mermaid:
 
 ```mermaid
 classDiagram
@@ -126,7 +127,43 @@ modelclass "1" --> "0..*" classattribute
 classattribute --* visibility
 ```
 
-It has the added benefit of being available for use in Markdown within vscode. I am using only the (static) class diagram in Mermaid. The definition for my model is as follows:
+It has the added benefit of being available for use in Markdown within vscode. I am using only the (static) class diagram in Mermaid. The definition for the model above is as follows:
+
+```
+classDiagram
+class modelclass {
+    +String name
+    +String inheritance
+    +String namespace
+    +modelclass parent
+    +List~classattribute~ attributes
+    +boolean isAbstract
+}
+class model {
+    +Date modeldate
+    +List~modelclass~ class
+}
+class classattribute {
+    +String name
+    +int type
+    +int length
+    +int precision
+    +visibility visibility
+}
+class visibility {
+    <<enumeration>>
+    Public
+    Private
+    Protected
+    Package
+}
+model "1" --> "0..*" modelclass
+modelclass "*" --> "1" modelclass: parent
+modelclass "1" --> "0..*" classattribute
+classattribute --* visibility
+```
+
+Following is the Mermaid 'code' that describes a Person Model which will be used to introduce some of the concepts of this framework:
 
 ```
 ---
@@ -210,7 +247,7 @@ classDiagram
     Contact "*" --> "1" ContactType
 ```
 
-Which renders like this:
+The Person model described above renders like this:
 
 ```mermaid
 ---
