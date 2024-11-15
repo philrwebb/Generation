@@ -34,6 +34,20 @@ Root/
 └── tsconfig.json  
 </code></pre>
 
+# The Project
+## mermaid folder
+contains:
+* classes.md - a mermaid diagram file that describes the underlying meta model that will be the basis for all code generation.
+* model.md - The mermaid diagram file that describes the thing we want to generate
+* model.mmd -
+## src folder
+contains:
+1. genmodel.ts - the typescript types that describe the meta model.
+2. jsonModelGenerator.ts - the typescript code to generate the meta description of our input model.md
+3. folders that contain generators that use the meta description to generate specific code.
+
+As is - you should be able to run npx tsc to build the js (into a dist folder).   You could also npx ts-node ./src/jsonModelGenerator.ts to run the typescript directly.
+
 # Code Generation Part 1
 
 Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
