@@ -15,22 +15,23 @@ node jsonModelGenerator.js
 
 <pre><code>
 Root/
+├── mermaid/
+│   │   ├── classes.md
+│   │   ├── model.md
+│   │   └── model.mmd  
 ├── src/
-│   ├── components/
-│   │   ├── Header.tsx
-│   │   ├── Footer.tsx
-│   │   └── Sidebar.tsx
-│   ├── utils/
-│   │   ├── helpers.ts
-│   │   └── api.ts
-│   ├── App.tsx
-│   └── index.tsx
-├── public/
-│   ├── index.html
-│   └── favicon.ico
+│   ├── codegeneration/
+│   │   ├── mssqldb/
+│   │   ├── python/
+│   │   ├── sqlitedb/
+│   │   ├── genmodel.ts
+│   │   └── jsonModelGenerator.ts  
+├── .eslintignore
 ├── .gitignore
+├── .prettierignore  
 ├── package.json
-└── README.md
+├── readme.md
+└── tsconfig.json  
 </code></pre>
 
 # Code Generation Part 1
