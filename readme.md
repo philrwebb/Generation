@@ -13,6 +13,26 @@ tsc -w
 node jsonModelGenerator.js
 ```
 
+<pre><code>
+Root/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── Sidebar.tsx
+│   ├── utils/
+│   │   ├── helpers.ts
+│   │   └── api.ts
+│   ├── App.tsx
+│   └── index.tsx
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── .gitignore
+├── package.json
+└── README.md
+</code></pre>
+
 # Code Generation Part 1
 
 Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
