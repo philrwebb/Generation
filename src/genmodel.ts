@@ -52,7 +52,12 @@ export type Model = {
 
 export const serializeClassesToJson = (model: Model, filePath: string) => {
   const jsonContent = JSON.stringify(model, null, 2);
-  fs.writeFileSync(filePath, jsonContent, 'utf8');
+  const outputDir = path.join(__dirname, 'output');
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+  const outputPath = path.join(outputDir, 'genmodel.json');
+  fs.writeFileSync(outputPath, jsonContent, 'utf8');
 };
 
 export const deserializeJsonToClasses = (filePath: string): Model => {
