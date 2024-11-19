@@ -9,7 +9,7 @@ import {
   serializeClassesToJson,
   deserializeJsonToClasses,
   WriteFile,
-} from '../../genmodel.js';
+} from '../../genmodel';
 
 const CreateTableTemplate = (tableName: string, columns: string[]): string => {
   return `

@@ -58,25 +58,25 @@ classDiagram
         +string:150 details
     }
     PersistableBase <|-- Contact
-    Person "0" --> "*" Contact
-    Person "0" --> "*" Address
+    Person "0" --> "*" Contact : contacts
+    Person "0" --> "*" Address : addresses
 
     note for GenderType "inheritance=none,namespace=referencedata"
     class GenderType {
     }
     ReferenceBase <|-- GenderType
-    Person "*" --> "1" GenderType
+    Person "*" --> "1" GenderType : genderType
 
     note for AddressType "inheritance=none,namespace=referencedata"
     class AddressType {
     }
     ReferenceBase <|-- AddressType
-    Address "*" --> "1" AddressType
+    Address "*" --> "1" AddressType : addressType
 
     note for ContactType "namespace=referencedata"
     class ContactType {
     }
     ReferenceBase <|-- ContactType
-    Contact "0..*" --> "0..1" ContactType
+    Contact "*" --> "1" ContactType : contactType
 
 ```

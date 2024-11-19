@@ -119,6 +119,9 @@ const processOneWayAssociationLine = (
   let target: string = line.split(' ')[4];
   let targetClass: Class = FindClass(target, classes);
   let targetMultiplicity: string = line.split(' ')[3];
+  let targetRole: string = '';
+  if (line.split(' ').length > 5) targetRole = line.split(' ')[6];
+
   let association: Association = {
     name: `Association_${source}_${target}`,
     source: {
@@ -133,7 +136,7 @@ const processOneWayAssociationLine = (
       multiplicity: targetMultiplicity
         ? targetMultiplicity.replace(/"/g, '')
         : '',
-      role: '',
+      role: targetRole,
       class: targetClass,
       navagability: true,
     } as Endpoint,

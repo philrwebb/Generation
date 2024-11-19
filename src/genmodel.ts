@@ -106,3 +106,26 @@ export const WriteFile = (
   const filePath = path.join(folderPath, fileName);
   fs.writeFileSync(filePath, content, 'utf8');
 };
+
+export const ModelTypeToCodeType = (
+  modeltype: string,
+  codeLanguage: string,
+): string => {
+  if (modeltype === 'string') {
+    if (codeLanguage === 'python') return 'str';
+    if (codeLanguage === 'typescript') return 'string';
+  }
+  if (modeltype === 'int') {
+    if (codeLanguage === 'python') return 'int';
+    if (codeLanguage === 'typescript') return 'number';
+  }
+  if (modeltype === 'bool') {
+    if (codeLanguage === 'python') return 'bool';
+    if (codeLanguage === 'typescript') return 'boolean';
+  }
+  if (modeltype === 'datetime') {
+    if (codeLanguage === 'python') return 'date';
+    if (codeLanguage === 'typescript') return 'Date';
+  }
+  return modeltype;
+};

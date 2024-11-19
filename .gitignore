@@ -2,4 +2,6 @@ node_modules/
 dist/
 output/
 .vscode/
-
+src/codegeneration/python/classes/
+src/codegeneration/typescript/classes/
+.mypy_cache/
