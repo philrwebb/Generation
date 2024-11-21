@@ -65,7 +65,7 @@ classDiagram
     class GenderType {
     }
     ReferenceBase <|-- GenderType
-    Person "*" --> "1" GenderType : genderType
+    Person "*" --> "1" GenderType : gender
 
     note for AddressType "inheritance=none,namespace=referencedata"
     class AddressType {
@@ -73,10 +73,17 @@ classDiagram
     ReferenceBase <|-- AddressType
     Address "*" --> "1" AddressType : addressType
 
-    note for ContactType "namespace=referencedata"
+    note for ContactType "inheritance=none,namespace=referencedata"
     class ContactType {
     }
     ReferenceBase <|-- ContactType
     Contact "*" --> "1" ContactType : contactType
+
+    note for Account "inheritance=rollup,namespace=finance"
+    class Account {
+
+    }
+    TimeLimitedPersistableBase <|-- Account
+    Account "*" --> "1" Person : accountHolder
 
 ```
