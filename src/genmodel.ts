@@ -114,18 +114,27 @@ export const ModelTypeToCodeType = (
   if (modeltype === 'string') {
     if (codeLanguage === 'python') return 'str';
     if (codeLanguage === 'typescript') return 'string';
+    if (codeLanguage === 'csharp') return 'string';
   }
   if (modeltype === 'int') {
     if (codeLanguage === 'python') return 'int';
     if (codeLanguage === 'typescript') return 'number';
+    if (codeLanguage === 'csharp') return 'int';
   }
   if (modeltype === 'bool') {
     if (codeLanguage === 'python') return 'bool';
     if (codeLanguage === 'typescript') return 'boolean';
+    if (codeLanguage === 'csharp') return 'bool';
   }
-  if (modeltype === 'datetime') {
+  if (modeltype === 'datetime' || modeltype === 'date') {
     if (codeLanguage === 'python') return 'date';
     if (codeLanguage === 'typescript') return 'Date';
+    if (codeLanguage === 'csharp') return 'DateTime';
+  }
+  if (modeltype === 'date') {
+    if (codeLanguage === 'python') return 'date';
+    if (codeLanguage === 'typescript') return 'Date';
+    if (codeLanguage === 'csharp') return 'DateTime';
   }
   return modeltype;
 };

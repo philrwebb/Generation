@@ -65,12 +65,12 @@ const buildClass = (
   classContent += '\n';
 
   if (c.parent?.name) {
-    classContent += `  constructor(...args: any[]) {\n`;
+    classContent += `  constructor(...args: unknown[]) {\n`;
     classContent += `    super(...args);\n`;
     classContent += `  }\n`;
     classContent += '\n';
   } else {
-    classContent += `  constructor(...args: any[]) {\n`;
+    classContent += `  constructor(...args: unknown[]) {\n`;
     classContent += `  }\n`;
     classContent += '\n';
   }
@@ -168,6 +168,4 @@ for (const c of model.classes) {
     fs.mkdirSync(filePath, { recursive: true });
   }
   fs.writeFileSync(filePath + '/' + c.name + '.ts', classContent, 'utf8');
-
-  console.log(classContent);
 }

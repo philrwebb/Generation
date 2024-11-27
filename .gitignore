@@ -3,5 +3,7 @@ dist/
 output/
 .vscode/
 src/codegeneration/python/classes/
-src/codegeneration/typescript/classes/
+src/codegeneration/typescript/model/
+src/codegeneration/typescript/server/
+src/codegeneration/csharp/model/
 .mypy_cache/
