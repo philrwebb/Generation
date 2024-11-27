@@ -317,6 +317,119 @@ export const writeIRepositoryFile = (
   );
 };
 
+export const writeRepositoryFile = (
+  className: string,
+  varName: string,
+  projectName: string,
+  outputFolder: string,
+  namespace: string,
+) => {
+  let repositoryContent = `using model.referencedata;
+using #projectName#.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace #projectName#.Repositories;
+
+public class #className#Repository : I#className#Repository
+{
+    private readonly AppDbContext _context;
+    private readonly ILogger<#className#Repository> _logger;
+    public #className#Repository(AppDbContext context, ILogger<#className#Repository> logger)
+    {
+        this._context = context;
+        this._logger = logger;
+    }
+    public async Task<IEnumerable<#className#>> GetAll()
+    {
+        return await _context.#className#s.ToListAsync();
+    }
+
+    public Task<#className#> GetById(int id)
+    {
+        if (id <= 0)
+        {
+            throw new Exception("Invalid id");
+        }
+        var #className# = _context.#className#s.FirstOrDefault(x => x.id == id);
+        if (#className# == null)
+        {
+            throw new Exception("#className# not found");
+        }
+        return Task.FromResult(#className#);
+    }
+
+    public Task<#className#> Add(#className# #varName#)
+    {
+        _logger.LogDebug("Adding #className# in repository");
+        _context.#className#s.Add(#varName#);
+        return Task.FromResult(#varName#);
+    }
+
+    public Task<#className#> Update(#className# #varName#)
+    {
+        _context.#className#s.Update(#varName#);
+        return Task.FromResult(#varName#);
+    }
+
+    public async Task<bool> SaveChangesAsync()
+    {
+        return (await _context.SaveChangesAsync() >= 0);
+    }
+
+}
+`;
+
+  repositoryContent = repositoryContent.replace(/#className#/g, className);
+  repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
+  repositoryContent = repositoryContent.replace(/#varName#/g, varName);
+
+  if (!fs.existsSync(outputFolder + '/' + namespace)) {
+    fs.mkdirSync(outputFolder + '/' + namespace, { recursive: true });
+  }
+
+  fs.writeFileSync(
+    outputFolder + '/' + namespace + '/' + className + 'Repository.cs',
+    repositoryContent,
+  );
+};
+
+export const writeDbContextFile = (
+  projectName: string,
+  className: string,
+  dataRoot: string,
+) => {
+  let tableName = pluralize(className);
+  let dbContextContent = `using Microsoft.EntityFrameworkCore;
+using model.finance;
+using model.persistance;
+using model.person;
+using model.referencedata;
+
+namespace #projectName#.Data;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public DbSet<#className#> #tableName# { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<PersistableBase>()
+            .HasDiscriminator<string>("Type")
+            .HasValue<#className#>("#className#");
+    }
+}
+`;
+  dbContextContent = dbContextContent.replace(/#className#/g, className);
+  dbContextContent = dbContextContent.replace(/#tableName#/g, tableName);
+  dbContextContent = dbContextContent.replace(/#projectName#/g, projectName);
+
+  fs.writeFileSync(dataRoot + '/AppDbContext.cs', dbContextContent);
+};
+
 export const setUpFolders = (
   outputRoot: string,
   controllerRoot: string,
@@ -351,4 +464,42 @@ export const setUpFolders = (
 export const toLowerCamelCase = (str: string): string => {
   if (!str) return str;
   return str.charAt(0).toLowerCase() + str.slice(1);
+};
+
+export const pluralize = (word: string): string => {
+  const irregulars: { [key: string]: string } = {
+    person: 'people',
+    man: 'men',
+    woman: 'women',
+    child: 'children',
+    tooth: 'teeth',
+    foot: 'feet',
+    mouse: 'mice',
+    goose: 'geese',
+    // Add more irregular nouns as needed
+  };
+
+  if (irregulars[word.toLowerCase()]) {
+    return irregulars[word.toLowerCase()];
+  }
+
+  const pluralRules: { [key: string]: RegExp } = {
+    es: /[sxz]$|[^aeiou]h$/,
+    ies: /[^aeiou]y$/,
+    ves: /(?:f|fe)$/,
+  };
+
+  if (pluralRules.es.test(word)) {
+    return word + 'es';
+  }
+
+  if (pluralRules.ies.test(word)) {
+    return word.slice(0, -1) + 'ies';
+  }
+
+  if (pluralRules.ves.test(word)) {
+    return word.replace(/(?:f|fe)$/, 'ves');
+  }
+
+  return word + 's';
 };
