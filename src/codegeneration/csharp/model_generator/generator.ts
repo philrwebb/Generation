@@ -22,6 +22,7 @@ const buildClass = (
   refDataAssociations: Association[],
   collectionAssociations: Association[],
   usingCollectionAssociations: Association[] = [],
+  foreignKeyAssociations: Association[],
 ): string => {
   //   console.log(c.parent);
   const parentName = !isEmptyObject(c.parent) ? c.parent?.name : '';
@@ -29,10 +30,10 @@ const buildClass = (
     ? 'model.' + c.parent?.namespace
     : '';
   let classContent = '';
-  classContent += `using System;\n`;
-  classContent += `using System.Collections.Generic;\n`;
-  classContent += `using System.Linq;\n`;
-  classContent += `using System.Threading.Tasks;\n`;
+  // classContent += `using System;\n`;
+  // classContent += `using System.Collections.Generic;\n`;
+  // classContent += `using System.Linq;\n`;
+  // classContent += `using System.Threading.Tasks;\n`;
   classContent += `using System.ComponentModel.DataAnnotations;\n`;
   classContent += `using System.ComponentModel.DataAnnotations.Schema;\n`;
   if (!isEmptyObject(c.parent)) {
@@ -90,6 +91,9 @@ const buildClass = (
     classContent += `    [ForeignKey("${a.target.class.name}Id")]\n`;
     classContent += `    public virtual ${a.target.class.name}? ${a.target.role} { get; set; } \n`;
   }
+  for (const a of foreignKeyAssociations) {
+    classContent += `    public int ${a.source.class.name}id { get; set; }\n`;
+  }
   for (const a of collectionAssociations) {
     classContent += `    public virtual ICollection<${a.target.class.name}> ${a.target.role} { get; set; } = new List<${a.target.class.name}>(); \n`;
   }
@@ -106,6 +110,13 @@ for (const c of model.classes) {
       a.source.class.name === c.name, // this class is the parent
   );
 
+  const foreignKeyCollections = model.associations.filter(
+    (a) =>
+      a.target.multiplicity === '*' &&
+      (a.source.multiplicity === '1' || a.source.multiplicity === '0') &&
+      a.target.class.name === c.name, // this class is the parent
+  );
+
   // find 1 to * (e.g. class with collections)
   let collectionAssociations = model.associations.filter(
     (a) =>
@@ -113,6 +124,7 @@ for (const c of model.classes) {
       a.target.multiplicity === '*' &&
       a.source.class.name === c.name, // this class is the parent
   );
+  console.log(collectionAssociations);
   // filter out any duplicate entries in collectionAssociations
   const uniqueAssociations = new Set();
   const usingCollectionAssociations = collectionAssociations.filter((a) => {
@@ -130,6 +142,7 @@ for (const c of model.classes) {
     refDataAssociations,
     collectionAssociations,
     usingCollectionAssociations,
+    foreignKeyCollections,
   );
   //   console.log(classContent);
   const filePath = outputRoot + '/' + c.namespace;

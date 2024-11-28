@@ -5,7 +5,6 @@ import {
   Class,
   Association,
   deserializeJsonToClasses,
-  ModelTypeToCodeType,
 } from '../../../genmodel';
 import {
   writeControllerFile,
@@ -49,7 +48,7 @@ model.classes.forEach((c: Class) => {
   usings.add(`using model.${c.namespace};`);
   dbSets += `    public DbSet<${c.name}> ${pluralizedName} { get; set; } = null!;\n`;
   modelBuilderConfig += `            .HasValue<${c.name}>("${c.name}")\n`;
-  const refDataAssociations = model.associations.filter(
+  const refDataAssociations: Association[] = model.associations.filter(
     (a) =>
       a.source.multiplicity === '*' &&
       a.target.multiplicity === '1' &&
@@ -61,6 +60,7 @@ model.classes.forEach((c: Class) => {
       a.target.multiplicity === '*' &&
       a.source.class.name === c.name, // this class is the parent
   );
+
   const uniqueAssociations = new Set();
   const usingCollectionAssociations = collectionAssociations.filter((a) => {
     const key = `${a.source.class.name}`;
@@ -77,6 +77,7 @@ model.classes.forEach((c: Class) => {
     config.projectName,
     c.namespace ?? '',
     config.controllerRoot,
+    refDataAssociations,
   );
   writeRepositoryInfrastructureFile(config.repositoryRoot, config.projectName);
   writeIRepositoryFile(
@@ -91,11 +92,11 @@ model.classes.forEach((c: Class) => {
     config.projectName,
     config.repositoryRoot,
     c.namespace ?? '',
+    refDataAssociations,
+    collectionAssociations,
   );
 });
-console.log('usings', usings);
-console.log('dbSets', dbSets);
-console.log('modelBuilderConfig', modelBuilderConfig);
+
 writeDbContextFile(
   config.projectName,
   usings,
@@ -103,33 +104,3 @@ writeDbContextFile(
   modelBuilderConfig,
   config.dataRoot,
 );
-
-// from here on in will be in a loop through the classes in the model
-// let className = 'ContactType';
-// let namespace = 'referencedata';
-// writeControllerFile(
-//   className,
-//   toLowerCamelCase(className),
-//   config.projectName,
-//   namespace,
-//   config.controllerRoot,
-// );
-
-// writeRepositoryInfrastructureFile(config.repositoryRoot, config.projectName);
-
-// writeIRepositoryFile(
-//   config.projectName,
-//   className,
-//   namespace,
-//   config.repositoryRoot,
-// );
-
-// writeRepositoryFile(
-//   className,
-//   toLowerCamelCase(className),
-//   config.projectName,
-//   config.repositoryRoot,
-//   namespace,
-// );
-
-// writeDbContextFile(config.projectName, className, config.dataRoot);

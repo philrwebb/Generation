@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { Association } from '../../../genmodel';
 
 export const writeControllerFile = (
   className: string,
@@ -7,6 +8,7 @@ export const writeControllerFile = (
   projectName: string,
   namespace: string,
   controllerRoot: string,
+  refDataAssociations: Association[],
 ) => {
   let controllerContent = `using Microsoft.AspNetCore.Mvc;
 using #projectname#.Repositories;
@@ -26,7 +28,7 @@ public class #className#Controller : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll#className#s()
+    public async Task<IActionResult> GetAll#pluralClassName#()
     {
         var #injectVar#s = await _#injectVar#Repository.GetAll();
         return Ok(#injectVar#s);
@@ -57,10 +59,15 @@ public class #className#Controller : ControllerBase
 
 }`;
 
+  const pluralClassName = pluralize(className);
   controllerContent = controllerContent.replace(/#projectname#/g, projectName);
   controllerContent = controllerContent.replace(/#className#/g, className);
   controllerContent = controllerContent.replace(/#injectVar#/g, injectVar);
   controllerContent = controllerContent.replace(/#namespace#/g, namespace);
+  controllerContent = controllerContent.replace(
+    /#pluralClassName#/g,
+    pluralClassName,
+  );
 
   fs.writeFileSync(
     controllerRoot + '/' + className + 'Controller.cs',
@@ -326,6 +333,8 @@ export const writeRepositoryFile = (
   projectName: string,
   outputFolder: string,
   namespace: string,
+  refDataAssociations: Association[],
+  collectionAssociations: Association[],
 ) => {
   let repositoryContent = `using model.#namespace#;
 using #projectName#.Data;
@@ -348,18 +357,18 @@ public class #className#Repository : I#className#Repository
         return await _context.#pluralClassName#.ToListAsync();
     }
 
-    public Task<#className#> GetById(int id)
+    public async Task<#className#> GetById(int id)
     {
         if (id <= 0)
         {
             throw new Exception("Invalid id");
         }
-        var #className# = _context.#pluralClassName#.FirstOrDefault(x => x.id == id);
+        var #className# = await _context.#pluralClassName#.#includes#FirstOrDefaultAsync(x => x.id == id);
         if (#className# == null)
         {
             throw new Exception("#className# not found");
         }
-        return Task.FromResult(#className#);
+        return #className#;
     }
 
     public Task<#className#> Add(#className# #varName#)
@@ -382,8 +391,17 @@ public class #className#Repository : I#className#Repository
 
 }
 `;
+  let includes = '';
+  for (const a of refDataAssociations) {
+    includes += `Include(x => x.${a.target.role}).`;
+  }
+  for (const a of collectionAssociations) {
+    includes += `Include(x => x.${a.target.role}).`;
+  }
 
+  repositoryContent = repositoryContent.replace(/#includes#/, includes);
   const pluralClassName = pluralize(className);
+  repositoryContent = repositoryContent.replace(/#includes#/, '');
   repositoryContent = repositoryContent.replace(/#className#/g, className);
   repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
   repositoryContent = repositoryContent.replace(/#varName#/g, varName);
