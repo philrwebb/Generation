@@ -10,7 +10,7 @@ export const writeControllerFile = (
 ) => {
   let controllerContent = `using Microsoft.AspNetCore.Mvc;
 using #projectname#.Repositories;
-using model.referencedata;
+using model.#namespace#;
 
 namespace #projectname#.Controllers.#namespace#;
 [ApiController]
@@ -112,7 +112,8 @@ export const writeExtensions = (
       }
   }`;
 
-  extensionsContent = extensionsContent.replace('#projectName#', projectName);
+  extensionsContent = extensionsContent.replace(/#projectName#/g, projectName);
+
   fs.writeFileSync(extensionsRoot + '/SerilogExtensions.cs', extensionsContent);
 
   extensionsContent = `using System.Reflection;
@@ -120,7 +121,7 @@ export const writeExtensions = (
   using Microsoft.Extensions.DependencyInjection;
   using Serilog;
   
-  namespace #projectName.Extensions;
+  namespace #projectName#.Extensions;
   
   public static class ServiceCollectionExtensions
   {
@@ -137,7 +138,8 @@ export const writeExtensions = (
       }
   }
   `;
-  extensionsContent = extensionsContent.replace('#projectName#', projectName);
+  extensionsContent = extensionsContent.replace(/#projectName#/g, projectName);
+
   fs.writeFileSync(
     extensionsRoot + '/ServiceCollectionExtensions.cs',
     extensionsContent,
@@ -298,7 +300,7 @@ export const writeIRepositoryFile = (
   namespace: string,
   outputFolder: string,
 ) => {
-  let repositoryContent = `using model.referencedata;
+  let repositoryContent = `using model.#namespace#;
   
   namespace #projectName#.Repositories;
   public interface I#className#Repository : IRepositoryBase<#className#>
@@ -310,6 +312,7 @@ export const writeIRepositoryFile = (
   }
   repositoryContent = repositoryContent.replace(/#className#/g, className);
   repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
+  repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
 
   fs.writeFileSync(
     outputFolder + '/' + namespace + '/I' + className + 'Repository.cs',
@@ -324,7 +327,7 @@ export const writeRepositoryFile = (
   outputFolder: string,
   namespace: string,
 ) => {
-  let repositoryContent = `using model.referencedata;
+  let repositoryContent = `using model.#namespace#;
 using #projectName#.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -342,7 +345,7 @@ public class #className#Repository : I#className#Repository
     }
     public async Task<IEnumerable<#className#>> GetAll()
     {
-        return await _context.#className#s.ToListAsync();
+        return await _context.#pluralClassName#.ToListAsync();
     }
 
     public Task<#className#> GetById(int id)
@@ -351,7 +354,7 @@ public class #className#Repository : I#className#Repository
         {
             throw new Exception("Invalid id");
         }
-        var #className# = _context.#className#s.FirstOrDefault(x => x.id == id);
+        var #className# = _context.#pluralClassName#.FirstOrDefault(x => x.id == id);
         if (#className# == null)
         {
             throw new Exception("#className# not found");
@@ -362,13 +365,13 @@ public class #className#Repository : I#className#Repository
     public Task<#className#> Add(#className# #varName#)
     {
         _logger.LogDebug("Adding #className# in repository");
-        _context.#className#s.Add(#varName#);
+        _context.#pluralClassName#.Add(#varName#);
         return Task.FromResult(#varName#);
     }
 
     public Task<#className#> Update(#className# #varName#)
     {
-        _context.#className#s.Update(#varName#);
+        _context.#pluralClassName#.Update(#varName#);
         return Task.FromResult(#varName#);
     }
 
@@ -380,9 +383,15 @@ public class #className#Repository : I#className#Repository
 }
 `;
 
+  const pluralClassName = pluralize(className);
   repositoryContent = repositoryContent.replace(/#className#/g, className);
   repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
   repositoryContent = repositoryContent.replace(/#varName#/g, varName);
+  repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
+  repositoryContent = repositoryContent.replace(
+    /#pluralClassName#/g,
+    pluralClassName,
+  );
 
   if (!fs.existsSync(outputFolder + '/' + namespace)) {
     fs.mkdirSync(outputFolder + '/' + namespace, { recursive: true });
@@ -396,22 +405,27 @@ public class #className#Repository : I#className#Repository
 
 export const writeDbContextFile = (
   projectName: string,
-  className: string,
+  usings: Set<string>,
+  dbSets: string,
+  modelBuilderConfig: string,
   dataRoot: string,
 ) => {
-  let tableName = pluralize(className);
-  let dbContextContent = `using Microsoft.EntityFrameworkCore;
-using model.finance;
+  // Template for AppDbContext.cs
+  let appDbContextTemplate = `
+using Microsoft.EntityFrameworkCore;
 using model.persistance;
-using model.person;
-using model.referencedata;
+//start usings
+
+//end usings
 
 namespace #projectName#.Data;
 
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-    public DbSet<#className#> #tableName# { get; set; } = null!;
+    //start dbsets
+
+    //end dbsets
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -419,15 +433,35 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<PersistableBase>()
             .HasDiscriminator<string>("Type")
-            .HasValue<#className#>("#className#");
+            //start modelbuilder
+
+            //end modelbuilder
     }
 }
 `;
-  dbContextContent = dbContextContent.replace(/#className#/g, className);
-  dbContextContent = dbContextContent.replace(/#tableName#/g, tableName);
-  dbContextContent = dbContextContent.replace(/#projectName#/g, projectName);
+  appDbContextTemplate = appDbContextTemplate.replace(
+    /\/\/start usings[\s\S]*?\/\/end usings/,
+    `//start usings\n${Array.from(usings).join('\n')}\n//end usings`,
+  );
 
-  fs.writeFileSync(dataRoot + '/AppDbContext.cs', dbContextContent);
+  appDbContextTemplate = appDbContextTemplate.replace(
+    /\/\/start dbsets[\s\S]*?\/\/end dbsets/,
+    `//start dbsets\n${dbSets}    //end dbsets`,
+  );
+
+  modelBuilderConfig = modelBuilderConfig.replace(/\n$/, ';\n');
+  appDbContextTemplate = appDbContextTemplate.replace(
+    /\/\/start modelbuilder[\s\S]*?\/\/end modelbuilder/,
+    `//start modelbuilder\n${modelBuilderConfig}            //end modelbuilder`,
+  );
+
+  appDbContextTemplate = appDbContextTemplate.replace(
+    /#projectName#/g,
+    projectName,
+  );
+
+  // Write the generated content to AppDbContext.cs
+  fs.writeFileSync(dataRoot + '/AppDbContext.cs', appDbContextTemplate);
 };
 
 export const setUpFolders = (
@@ -468,7 +502,6 @@ export const toLowerCamelCase = (str: string): string => {
 
 export const pluralize = (word: string): string => {
   const irregulars: { [key: string]: string } = {
-    person: 'people',
     man: 'men',
     woman: 'women',
     child: 'children',
@@ -476,6 +509,7 @@ export const pluralize = (word: string): string => {
     foot: 'feet',
     mouse: 'mice',
     goose: 'geese',
+    party: 'Parties',
     // Add more irregular nouns as needed
   };
 

@@ -1,6 +1,7 @@
 // create the project folder structure under output/csharp/api - the root folder will be provided as the project name
 
 import {
+  Model,
   Class,
   Association,
   deserializeJsonToClasses,
@@ -9,7 +10,6 @@ import {
 import {
   writeControllerFile,
   writeExtensions,
-  copyRecursiveSync,
   writeProjectFile,
   writeProgramFile,
   writeRepositoryInfrastructureFile,
@@ -17,24 +17,12 @@ import {
   writeRepositoryFile,
   setUpFolders,
   toLowerCamelCase,
+  pluralize,
   writeDbContextFile,
 } from './csharpgenutils';
 import config from './config';
 
-// import * as fs from 'fs';
-
-// refactor to introduce all of these from configuration
-// const projectName = config.projectName;
-// const genModelPath = './output/genModel.json'; // relative to the execution path
-// const genClassPath = './output/csharp/model'; // relative to the execution path
-// const outputRoot = './output/csharp/api/' + projectName; // relative to the execution path
-// const controllerRoot = outputRoot + '/Controllers'; // relative to the outputRoot
-// const modelRoot = outputRoot + '/Models'; // relative to the outputRoot
-// const repositoryRoot = outputRoot + '/Repositories'; // relative to the outputRoot
-// const extensionsRoot = outputRoot + '/Extensions'; // relative to the outputRoot
-// const dataRoot = outputRoot + '/Data'; // relative to the outputRoot
-
-const model = deserializeJsonToClasses(config.genModelPath);
+const model: Model = deserializeJsonToClasses(config.genModelPath);
 
 setUpFolders(
   config.outputRoot,
@@ -52,32 +40,96 @@ writeExtensions(config.projectName, config.extensionsRoot);
 
 writeProgramFile(config.projectName, config.outputRoot);
 
+const usings = new Set<string>();
+let dbSets = '';
+let modelBuilderConfig = '';
+model.classes.forEach((c: Class) => {
+  if (c.isAbstract) return; // skip abstract classes
+  const pluralizedName = pluralize(c.name);
+  usings.add(`using model.${c.namespace};`);
+  dbSets += `    public DbSet<${c.name}> ${pluralizedName} { get; set; } = null!;\n`;
+  modelBuilderConfig += `            .HasValue<${c.name}>("${c.name}")\n`;
+  const refDataAssociations = model.associations.filter(
+    (a) =>
+      a.source.multiplicity === '*' &&
+      a.target.multiplicity === '1' &&
+      a.source.class.name === c.name, // this class is the parent
+  );
+  let collectionAssociations = model.associations.filter(
+    (a) =>
+      (a.source.multiplicity === '0' || a.source.multiplicity === '1') &&
+      a.target.multiplicity === '*' &&
+      a.source.class.name === c.name, // this class is the parent
+  );
+  const uniqueAssociations = new Set();
+  const usingCollectionAssociations = collectionAssociations.filter((a) => {
+    const key = `${a.source.class.name}`;
+    if (uniqueAssociations.has(key)) {
+      return false;
+    } else {
+      uniqueAssociations.add(key);
+      return true;
+    }
+  });
+  writeControllerFile(
+    c.name,
+    toLowerCamelCase(c.name),
+    config.projectName,
+    c.namespace ?? '',
+    config.controllerRoot,
+  );
+  writeRepositoryInfrastructureFile(config.repositoryRoot, config.projectName);
+  writeIRepositoryFile(
+    config.projectName,
+    c.name,
+    c.namespace ?? '',
+    config.repositoryRoot,
+  );
+  writeRepositoryFile(
+    c.name,
+    toLowerCamelCase(c.name),
+    config.projectName,
+    config.repositoryRoot,
+    c.namespace ?? '',
+  );
+});
+console.log('usings', usings);
+console.log('dbSets', dbSets);
+console.log('modelBuilderConfig', modelBuilderConfig);
+writeDbContextFile(
+  config.projectName,
+  usings,
+  dbSets,
+  modelBuilderConfig,
+  config.dataRoot,
+);
+
 // from here on in will be in a loop through the classes in the model
-let className = 'ContactType';
-let namespace = 'referencedata';
-writeControllerFile(
-  className,
-  toLowerCamelCase(className),
-  config.projectName,
-  namespace,
-  config.controllerRoot,
-);
+// let className = 'ContactType';
+// let namespace = 'referencedata';
+// writeControllerFile(
+//   className,
+//   toLowerCamelCase(className),
+//   config.projectName,
+//   namespace,
+//   config.controllerRoot,
+// );
 
-writeRepositoryInfrastructureFile(config.repositoryRoot, config.projectName);
+// writeRepositoryInfrastructureFile(config.repositoryRoot, config.projectName);
 
-writeIRepositoryFile(
-  config.projectName,
-  className,
-  namespace,
-  config.repositoryRoot,
-);
+// writeIRepositoryFile(
+//   config.projectName,
+//   className,
+//   namespace,
+//   config.repositoryRoot,
+// );
 
-writeRepositoryFile(
-  className,
-  toLowerCamelCase(className),
-  config.projectName,
-  config.repositoryRoot,
-  namespace,
-);
+// writeRepositoryFile(
+//   className,
+//   toLowerCamelCase(className),
+//   config.projectName,
+//   config.repositoryRoot,
+//   namespace,
+// );
 
-writeDbContextFile(config.projectName, className, config.dataRoot);
+// writeDbContextFile(config.projectName, className, config.dataRoot);

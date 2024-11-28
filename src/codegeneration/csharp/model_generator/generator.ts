@@ -53,10 +53,12 @@ const buildClass = (
 
   classContent += `namespace model.${c.namespace};\n`;
 
+  let abstract = '';
+  if (c.isAbstract) abstract = 'abstract ';
   if (!isEmptyObject(c.parent)) {
-    classContent += `public class ${c.name} : ${parentName}\n`;
+    classContent += `public ${abstract}class ${c.name} : ${parentName}\n`;
   } else {
-    classContent += `public class ${c.name}\n`;
+    classContent += `public ${abstract}class ${c.name}\n`;
   }
   classContent += '{\n';
   for (const a of c.attributes) {
@@ -84,8 +86,9 @@ const buildClass = (
     }
   }
   for (const a of refDataAssociations) {
-    classContent += `    [ForeignKey("${a.target.class.name}")]\n`;
-    classContent += `    public virtual ${a.target.class.name} ${a.target.role} { get; set; } = new ${a.target.class.name}(); \n`;
+    classContent += `    public int ${a.target.class.name}Id { get; set; }\n`;
+    classContent += `    [ForeignKey("${a.target.class.name}Id")]\n`;
+    classContent += `    public virtual ${a.target.class.name}? ${a.target.role} { get; set; } \n`;
   }
   for (const a of collectionAssociations) {
     classContent += `    public virtual ICollection<${a.target.class.name}> ${a.target.role} { get; set; } = new List<${a.target.class.name}>(); \n`;
