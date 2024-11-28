@@ -6,7 +6,12 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./csharpcodefirstgenerator.js",
-    "dev": "nodemon --exec ts-node ./csharpcodefirstgenerator.ts"
+    "dev": "nodemon --exec ts-node ./csharpcodefirstgenerator.ts",
+    "generate": "ts-node ./src/jsonModelGenerator.ts",
+    "test": "jest",
+    "genc#model": "ts-node ./src/codegeneration/csharp/model_generator/generator.ts",
+    "genc#api": "ts-node ./src/codegeneration/csharp/api_generator/generator.ts",
+    "runc#api": "dotnet run --project ./output/csharp/api/PersonApi/PersonApi.csproj"
   },
   "author": "Phil Webb",
   "license": "ISC",

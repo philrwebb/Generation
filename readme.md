@@ -13,18 +13,27 @@ The following assumes:
 git clone https://github.com/philrwebb/Generation.git
 cd Generation
 npm install
-tsc -w
-node jsonModelGenerator.js
+npm run generate
+npm run genc#model
+npm run genc#api
+npm run runc#api
 ```
+
+The above will create and run a csharp webapi project under an output folder. Note the output folder is not part of the github repo
 
 <pre><code>
 Root/
 ├── mermaid/
 │   │   ├── classes.md
 │   │   ├── model.md
-│   │   └── model.mmd  
+│   │   └── model.mmd 
+├── output  
 ├── src/
 │   ├── codegeneration/
+│   │   ├── csharp/
+│   │   │    └── csharp/
+│   │   │       ├── api_generator
+│   │   │       └── model_generator
 │   │   ├── mssqldb/
 │   │   ├── python/
 │   │   ├── sqlitedb/
@@ -39,18 +48,24 @@ Root/
 </code></pre>
 
 # The Project
+
 ## mermaid folder
+
 contains:
-* classes.md - a mermaid diagram file that describes the underlying meta model that will be the basis for all code generation.
-* model.md - The mermaid diagram file that describes the thing we want to generate
-* model.mmd -
+
+- classes.md - a mermaid diagram file that describes the underlying meta model that will be the basis for all code generation.
+- model.md - The mermaid diagram file that describes the thing we want to generate
+- model.mmd -
+
 ## src folder
+
 contains:
+
 1. genmodel.ts - the typescript types that describe the meta model.
 2. jsonModelGenerator.ts - the typescript code to generate the meta description of our input model.md
 3. folders that contain generators that use the meta description to generate specific code.
 
-As is - you should be able to run npx tsc to build the js (into a dist folder).   You could also npx ts-node ./src/jsonModelGenerator.ts to run the typescript directly.
+As is - you should be able to run npx tsc to build the js (into a dist folder). You could also npx ts-node ./src/jsonModelGenerator.ts to run the typescript directly.
 
 # Code Generation Part 1
 
@@ -101,7 +116,7 @@ export type Association = {
 };
 
 export type Endpoint = {
-  multiplicity: "0" | "1" | "*" | "n";
+  multiplicity: '0' | '1' | '*' | 'n';
   role?: string;
   fkWinner?: boolean;
   class: string;
@@ -109,15 +124,15 @@ export type Endpoint = {
 };
 
 export enum Visibility {
-  Public = "public",
-  Private = "private",
-  Protected = "protected",
+  Public = 'public',
+  Private = 'private',
+  Protected = 'protected',
 }
 
 export enum Inheritance {
-  rollup = "rollup",
-  propagateattributes = "propagateattributes",
-  none = "none",
+  rollup = 'rollup',
+  propagateattributes = 'propagateattributes',
+  none = 'none',
 }
 
 export type Model = {
