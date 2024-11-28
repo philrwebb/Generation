@@ -79,6 +79,13 @@ classDiagram
     ReferenceBase <|-- ContactType
     Contact "*" --> "1" ContactType : contactType
 
+    note for Department "inheritance=none,namespace=person"
+    class Department {
+        +string:150 departmentName
+    }
+    PersistableBase <|-- Department
+    Employee "*" --> "1" Department : department
+
     note for Account "inheritance=rollup,namespace=finance"
     class Account {
 
