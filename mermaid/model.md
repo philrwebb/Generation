@@ -37,7 +37,6 @@ classDiagram
 
     note for Employee "inheritance=none,namespace=person"
     class Employee {
-        +string:150 department
         +date: startDate
     }
     Person <|-- Employee

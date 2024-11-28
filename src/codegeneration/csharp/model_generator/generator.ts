@@ -1,6 +1,5 @@
 import {
   Class,
-  Attribute,
   Association,
   deserializeJsonToClasses,
   ModelTypeToCodeType,
@@ -30,10 +29,6 @@ const buildClass = (
     ? 'model.' + c.parent?.namespace
     : '';
   let classContent = '';
-  // classContent += `using System;\n`;
-  // classContent += `using System.Collections.Generic;\n`;
-  // classContent += `using System.Linq;\n`;
-  // classContent += `using System.Threading.Tasks;\n`;
   classContent += `using System.ComponentModel.DataAnnotations;\n`;
   classContent += `using System.ComponentModel.DataAnnotations.Schema;\n`;
   if (!isEmptyObject(c.parent)) {
@@ -124,7 +119,6 @@ for (const c of model.classes) {
       a.target.multiplicity === '*' &&
       a.source.class.name === c.name, // this class is the parent
   );
-  console.log(collectionAssociations);
   // filter out any duplicate entries in collectionAssociations
   const uniqueAssociations = new Set();
   const usingCollectionAssociations = collectionAssociations.filter((a) => {
