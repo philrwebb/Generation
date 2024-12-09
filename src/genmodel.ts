@@ -115,26 +115,69 @@ export const ModelTypeToCodeType = (
     if (codeLanguage === 'python') return 'str';
     if (codeLanguage === 'typescript') return 'string';
     if (codeLanguage === 'csharp') return 'string';
+    if (codeLanguage === 'zod') return 'string';
   }
   if (modeltype === 'int') {
     if (codeLanguage === 'python') return 'int';
     if (codeLanguage === 'typescript') return 'number';
     if (codeLanguage === 'csharp') return 'int';
+    if (codeLanguage === 'zod') return 'number';
   }
   if (modeltype === 'bool') {
     if (codeLanguage === 'python') return 'bool';
     if (codeLanguage === 'typescript') return 'boolean';
     if (codeLanguage === 'csharp') return 'bool';
+    if (codeLanguage === 'zod') return 'boolean';
   }
   if (modeltype === 'datetime' || modeltype === 'date') {
     if (codeLanguage === 'python') return 'date';
     if (codeLanguage === 'typescript') return 'Date';
     if (codeLanguage === 'csharp') return 'DateTime';
+    if (codeLanguage === 'zod') return 'date';
   }
   if (modeltype === 'date') {
     if (codeLanguage === 'python') return 'date';
     if (codeLanguage === 'typescript') return 'Date';
     if (codeLanguage === 'csharp') return 'DateTime';
+    if (codeLanguage === 'zod') return 'date';
   }
   return modeltype;
+};
+
+export const pluralize = (word: string): string => {
+  const irregulars: { [key: string]: string } = {
+    man: 'men',
+    woman: 'women',
+    child: 'children',
+    tooth: 'teeth',
+    foot: 'feet',
+    mouse: 'mice',
+    goose: 'geese',
+    party: 'Parties',
+    // Add more irregular nouns as needed
+  };
+
+  if (irregulars[word.toLowerCase()]) {
+    return irregulars[word.toLowerCase()];
+  }
+
+  const pluralRules: { [key: string]: RegExp } = {
+    es: /[sxz]$|[^aeiou]h$/,
+    ies: /[^aeiou]y$/,
+    ves: /(?:f|fe)$/,
+  };
+
+  if (pluralRules.es.test(word)) {
+    return word + 'es';
+  }
+
+  if (pluralRules.ies.test(word)) {
+    return word.slice(0, -1) + 'ies';
+  }
+
+  if (pluralRules.ves.test(word)) {
+    return word.replace(/(?:f|fe)$/, 'ves');
+  }
+
+  return word + 's';
 };

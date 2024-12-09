@@ -135,6 +135,28 @@ const buildClass = (
     classContent += '\n';
   }
 
+  // create a public toJSON() method.
+  // return will be a JSON object with all attributes and associations of this class and its parent classes
+  classContent += `  public toJSON() {\n`;
+  classContent += `    const retval = {\n`;
+  if (c.parent?.name) {
+    classContent += `      ...super.toJSON(),\n`;
+  }
+  for (const a of c.attributes) {
+    classContent += `      ${a.name}: this.${a.name},\n`;
+  }
+  for (const assoc of refDataAssociations) {
+    classContent += `      ${assoc.target.role}: this.${assoc.target.role},\n`;
+  }
+  for (const assoc of collectionAssociations) {
+    classContent += `      ${assoc.target.role}: this.${assoc.target.role},\n`;
+  }
+  classContent += `    };\n`;
+
+  classContent += `    return retval;\n`;
+
+  classContent += `  };\n`;
+
   classContent += '}\n';
 
   return classContent;
