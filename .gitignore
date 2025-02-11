@@ -7,4 +7,5 @@ src/codegeneration/typescript/model/
 src/codegeneration/typescript/server/
 src/codegeneration/csharp/model/
 .mypy_cache/
+*.js
 tempqueries.txt

@@ -9,6 +9,7 @@ import {
     getCollectionAssociationsForClass,
     pluralize,
     camelCaseToTitleCase,
+    getClassAndParentAttributes,
 } from "../../../genmodel";
 import * as fs from "fs";
 
@@ -83,58 +84,6 @@ const doSchemaCollectionAssociations = (
     }
     return schemaContent;
 };
-// const buildZodSchemas = (
-//     c: Class,
-//     refDataAssociations: Association[],
-//     collectionAssociations: Association[]
-// ): string => {
-//     let schemaContent = "";
-
-//     schemaContent += doSchemaAttributes(c, schemaContent);
-//     let schemaContentAssociations = doSchemaRefDataAssociations(
-//         c,
-//         refDataAssociations,
-//         ""
-//     );
-//     let schemaContentCollectionAssociations = doSchemaCollectionAssociations(
-//         c,
-//         collectionAssociations,
-//         ""
-//     );
-//     let schemaContentTop = `import { z } from 'zod';\n\n`;
-//     schemaContentTop += `export const Create${c.name}Schema = z.object({\n`;
-//     schemaContent =
-//         schemaContentTop +
-//         schemaContent +
-//         schemaContentAssociations +
-//         schemaContentCollectionAssociations;
-//     schemaContent += "});\n\n";
-
-//     schemaContent += `export type Create${c.name}Dto = z.infer<typeof Create${c.name}Schema>;\n\n`;
-//     return schemaContent;
-// };
-// const buildtypes = (
-//     c: Class,
-//     refDataAssociations: Association[],
-//     collectionAssociations: Association[]
-// ): string => {
-//     let typeContent = "";
-
-//     if (c.parent?.name !== undefined) {
-//         typeContent += `import { ${c.parent?.name} } from '../${c.parent?.namespace}/${c.parent?.name}';\n\n`;
-//         typeContent += `export interface ${c.name} extends ${c.parent?.name} {\n`;
-//     } else {
-//         typeContent += `export interface ${c.name} {\n`;
-//     }
-//     for (const a of c.attributes) {
-//         typeContent += `  ${a.name}: ${ModelTypeToCodeType(
-//             a.type,
-//             "typescript"
-//         )};\n`;
-//     }
-//     typeContent += "}\n";
-//     return typeContent;
-// };
 const buildapitsrowsForClass = (c: Class): string => {
     if (c.isAbstract) {
         return "";
@@ -223,17 +172,17 @@ const buildpageplustsContent = (c: Class, r: Association[]): string => {
     if (c.isAbstract) {
         return "";
     }
-    const templatePath = path.join(__dirname, "../templates/plusPage.ts");
+    const templatePath = path.join(__dirname, "../templates/+page.server.ts");
     let templateContent = fs.readFileSync(templatePath, "utf8");
     let typeImports = ` ${c.name}`;
     let apiImports = `get${pluralize(c.name)}`;
     let responses = ` ${c.name.toLowerCase()}Response`;
     let promises = `get${pluralize(c.name)}()`;
     let statuscheck = `${c.name.toLowerCase()}Response.status === 200`;
-    let assignments = `const ${c.name.toLowerCase()}: ${
+    let assignments = `const ${c.name.toLowerCase()}s: ${
         c.name
     }[] = ${c.name.toLowerCase()}Response.data;\n`;
-    let returns = `${c.name.toLowerCase()}`;
+    let returns = `${c.name.toLowerCase()}s`;
     if (r.length > 0) {
         for (const a of r) {
             typeImports += `, ${a.target.class.name}`;
@@ -247,6 +196,7 @@ const buildpageplustsContent = (c: Class, r: Association[]): string => {
             returns += `, ${a.target.class.name.toLowerCase()}`;
         }
     }
+    apiImports += `, delete${c.name}`;
     templateContent = templateContent.replace("{{typeImports}}", typeImports);
     templateContent = templateContent.replace("{{apiImports}}", apiImports);
     templateContent = templateContent.replace("{{responses}}", responses);
@@ -254,6 +204,17 @@ const buildpageplustsContent = (c: Class, r: Association[]): string => {
     templateContent = templateContent.replace("{{statuscheck}}", statuscheck);
     templateContent = templateContent.replace("{{assignments}}", assignments);
     templateContent = templateContent.replace("{{returns}}", returns);
+    let classlowertext = c.name.toLowerCase();
+    templateContent = templateContent.replace(
+        new RegExp("{{classlowertext}}", "g"),
+        classlowertext
+    );
+
+    let classuppertext = c.name;
+    templateContent = templateContent.replace(
+        new RegExp("{{classuppertext}}", "g"),
+        classuppertext
+    );
     return templateContent;
 };
 const buildtypesveltemainContent = (c: Class, r: Association[]): string => {
@@ -267,31 +228,19 @@ const buildtypesveltemainContent = (c: Class, r: Association[]): string => {
         typeImports += `, ${a.target.class.name}`;
     }
     templateContent = templateContent.replace("{{typeImports}}", typeImports);
-    let apiImports = `delete${c.name}`;
-    templateContent = templateContent.replace("{{apiImports}}", apiImports);
-    let assignments = `let ${pluralize(c.name).toLowerCase()}: ${
-        c.name
-    }[] = data.${c.name.toLowerCase()};\n`;
+    templateContent = templateContent.replace("{{classuppertext}}", c.name);
+    templateContent = templateContent.replace(
+        "{{classlowertext}}",
+        `${c.name.toLowerCase()}`
+    );
+    let assignments = "";
+
     for (const a of r) {
         assignments += `let ${pluralize(a.target.class.name).toLowerCase()}: ${
             a.target.class.name
         }[] = data.${a.target.class.name.toLowerCase()};\n`;
     }
     templateContent = templateContent.replace("{{assignments}}", assignments);
-    let classlowertext = c.name.toLowerCase();
-    templateContent = templateContent.replace(
-        "{{classlowertext}}",
-        classlowertext
-    );
-    let classuppertext = c.name;
-    templateContent = templateContent.replace(
-        new RegExp("{{classuppertext}}", "g"),
-        classuppertext
-    );
-    let deletelogic = `${pluralize(c.name).toLowerCase()} = ${pluralize(
-        c.name
-    ).toLowerCase()}.filter((item) => item.id !== id);\n`;
-    templateContent = templateContent.replace("{{deleteLogic}}", deletelogic);
     let getrefdatalogic = "";
     for (const a of r) {
         getrefdatalogic += `function get${a.target.class.name}Description(id: number): string{\n`;
@@ -307,33 +256,10 @@ const buildtypesveltemainContent = (c: Class, r: Association[]): string => {
     );
     let html = generateHtmlForClass(c, r);
     templateContent = templateContent.replace("{{html}}", html);
-    let variablestyle = "";
     let totalwidthitems = c.attributes.length + r.length + 2;
     templateContent = templateContent.replace(
         "{{noOfCols}}",
         `${totalwidthitems}`
-    );
-    for (let i = 1; i <= totalwidthitems; i++) {
-        variablestyle += `  .grid-item:nth-child(${
-            totalwidthitems * 2
-        }n + ${i}),\n`;
-    }
-    variablestyle = variablestyle.replace(/,\n$/, "\n");
-    variablestyle += `   {
-       background-color: grey;
-    }\n`;
-    for (let i = 1; i <= totalwidthitems; i++) {
-        variablestyle += `  .grid-item:nth-child(${totalwidthitems * 2}n + ${
-            i + totalwidthitems
-        }),\n`;
-    }
-    variablestyle = variablestyle.replace(/,\n$/, "\n");
-    variablestyle += `   {
-       background-color: white;
-    }\n`;
-    templateContent = templateContent.replace(
-        "{{variablestyle}}",
-        variablestyle
     );
     return templateContent;
 };
@@ -481,7 +407,7 @@ for (const c of model.classes) {
             fs.mkdirSync(filePath, { recursive: true });
         }
         fs.writeFileSync(
-            filePath + "/+page.ts",
+            filePath + "/+page.server.ts",
             typepageplustsContent[c.name],
             "utf8"
         );
@@ -511,7 +437,7 @@ for (const c of model.classes) {
 function generateHtmlForEdit(c: Class, r: Association[]) {
     let html = `<h1 class="my-6 text-center text-2xl font-bold">Edit ${c.name}</h1>\n`;
     html += `<form on:submit|preventDefault={save${c.name}} class="grid grid-cols-2 gap-4">\n`;
-    for (const a of c.attributes) {
+    for (const a of getClassAndParentAttributes(c)) {
         let div = `   <div class="flex items-center">\n`;
         div += `      <label for=${a.name} class="w-1/3">${camelCaseToTitleCase(
             a.name
@@ -563,9 +489,14 @@ function generateHtmlForEdit(c: Class, r: Association[]) {
     return html;
 }
 function generateHtmlForClass(c: Class, r: Association[]) {
-    let html = `<h1 class="my-6 text-center text-2xl font-bold">${c.name}</h1>\n`;
-
-    html += '<div class="grid-container">\n';
+    let html = `
+<h1 class="my-6 text-center text-2xl font-bold">Person</h1>    
+<div class="mb-4 flex items-center">
+	<label for="showAll" class="mr-2">Show All:</label>
+	<input id="showAll" type="checkbox" bind:checked={showAll} />
+</div>
+<div class="grid-container">\n
+`;
     html += `  <div class="grid-header">ID</div>\n`;
     for (const a of c.attributes) {
         html += `  <div class="grid-header">${a.name}</div>\n`;
@@ -574,42 +505,91 @@ function generateHtmlForClass(c: Class, r: Association[]) {
         html += `  <div class="grid-header">${a.target.class.name}</div>\n`;
     }
     html += `  <div class="grid-header">Actions</div>\n`;
-    html += `  {#each ${pluralize(
-        c.name
-    ).toLowerCase()} as ${c.name.toLowerCase()}}\n`;
-    html += `  <div class='grid-item'>{${c.name.toLowerCase()}.id}</div>\n`;
+    html += `  {#each filteredActive() as item, index}\n`;
+    html += `     {@render lineItem(index, item.active, item.id)}\n`;
     for (const a of c.attributes) {
         if (a.type === "date") {
-            html += `  <div class="grid-item">{new Date(${c.name.toLowerCase()}.${
-                a.name
-            }).toLocaleDateString().slice(0,10)}</div>\n`;
+            html += `  {@render lineItem(index, item.active, new Date(item.${a.name}).toLocaleDateString().slice(0,10))}\n`;
         } else {
-            html += `  <div class="grid-item">{${c.name.toLowerCase()}.${
-                a.name
-            }}</div>\n`;
+            html += `  {@render lineItem(index, item.active, item.${a.name})}\n`;
         }
     }
     for (const a of r) {
-        html += `  <div class="grid-item">{get${
-            a.target.class.name
-        }Description(${c.name.toLowerCase()}.${
-            a.target.class.name
-        }id)}</div>\n`;
+        html += `  {@render lineItem(index, item.active, get${a.target.class.name}Description(item.${a.target.class.name}id))}\n`;
     }
-    html += `  <div class="grid-item flex items-center space-x-2">\n`;
-    html += `    <a href="/${c.name.toLowerCase()}/{${c.name.toLowerCase()}.id}/edit" class="mr-2">\n`;
-    html += `    <button class="rounded bg-blue-500 px-2 py-1 text-white hover:bg-blue-700">Edit</button>\n`;
-    html += `    </a>\n`;
-    html += `    <button on:click={() => remove${
-        c.name
-    }(${c.name.toLowerCase()}.id)} class="rounded bg-red-500 px-2 py-1 text-white hover:bg-red-700">Delete</button>\n`;
-    html += `  </div>\n`;
-    html += `  {/each}\n`;
-    html += `</div>\n`;
-    html += `<div class="mt-4 flex justify-center">\n`;
-    html += `  <a href="/${c.name.toLowerCase()}/create" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700">\n`;
-    html += `    Add New ${c.name}\n`;
-    html += `  </a>\n`;
-    html += `</div>\n`;
+    html += `
+    		<div class="border border-gray-300 p-2 {index % 2 === 1 ? 'bg-gray-200' : ''} {item.active ? '' : 'text-red-500'} flex items-center space-x-2">
+			<a href="/${c.name.toLowerCase()}/{item.id}/edit" class="mr-2">
+				<button class="rounded bg-blue-500 px-2 py-1 text-white hover:bg-blue-700">Edit</button>
+			</a>
+			<button
+				onclick={(event) => {
+					event.preventDefault();
+					openDeleteModal(item.id);
+				}}
+				class="rounded bg-red-500 px-2 py-1 text-white hover:bg-red-700"
+				disabled={!item.active}
+			>
+				Delete
+			</button>
+		</div>
+    {/each}
+</div>\n`;
+    html += `
+<div class="mt-4 flex justify-center">
+	<a href="/${c.name.toLowerCase()}/create" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700">
+		Add New Person
+	</a>
+</div>
+
+{#snippet lineItem(index: number, active: boolean | undefined, displayValue: any)}
+	<div
+		class="border border-gray-300 p-2 {index % 2 === 1 ? 'bg-gray-200' : ''} {active
+			? ''
+			: 'text-red-500'}"
+	>
+		{displayValue}
+	</div>
+{/snippet}
+
+{#if showDeleteModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm"
+	>
+		<div class="w-80 rounded bg-white p-6 shadow-lg">
+			<p class="mb-6 text-center text-xl font-semibold">Delete?</p>
+			<form method="POST" action="?/delete">
+				<input type="hidden" name="id" value={deleteId} />
+				<div class="flex justify-center gap-4">
+					<button type="submit" class="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-700"
+						>Yes</button
+					>
+					<button
+						onclick={() => closeDeleteModal()}
+						type="button"
+						class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700">No</button
+					>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+<style>
+	.grid-container {
+		display: grid;
+		grid-template-columns: repeat({{noOfCols}}, 1fr);
+		gap: 1px;
+	}
+
+	.grid-header {
+		font-weight: bold;
+		background-color: lightskyblue;
+		padding: 0.5rem;
+		border: 1px solid #ccc;
+		text-align: center;
+	}
+</style>
+`;
     return html;
 }

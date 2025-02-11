@@ -1,48 +1,26 @@
 <script lang="ts">
 	import type { {{typeImports}} } from '$lib/types';
-	import type { PageData } from './$types';
-	import { {{apiImports}} } from '$lib/api';
+	let { data } = $props();
+	let pbaseList: {{classuppertext}}[] = data.{{classlowertext}}s;
+	{{assignments}}
+	let showAll = $state(false);
+	let showDeleteModal = $state(false);
+	let deleteId: number | null = $state(null);
 
-	export let data: PageData;
+	{{getRefDataLogic}}
 
-    {{assignments}}
-
-	async function remove{{classuppertext}}(id: number) {
-		if (confirm('Are you sure you want to delete this {{classlowertext}}?')) {
-			const response = await delete{{classuppertext}}(id);
-			if (response.status === 204) {
-                {{deleteLogic}}
-			} else {
-				console.error('Failed to delete {{classlowertext}}');
-			}
-		}
+	function filteredActive() {
+		return showAll ? pbaseList : pbaseList.filter((item) => item.active);
 	}
-    {{getRefDataLogic}}
+	function openDeleteModal(id: number) {
+		deleteId = id;
+		showDeleteModal = true;
+	}
 
+	function closeDeleteModal() {
+		showDeleteModal = false;
+		deleteId = null;
+	}
 </script>
 
 {{html}}
-
-<style>
-	.grid-container {
-		display: grid;
-		grid-template-columns: repeat({{noOfCols}}, 1fr);
-		gap: 2px;
-	}
-
-	.grid-header {
-		font-weight: bold;
-		background-color: lightskyblue;
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		text-align: center;
-	}
-
-	.grid-item {
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-	}
-
-	{{variablestyle}}
-
-</style>
