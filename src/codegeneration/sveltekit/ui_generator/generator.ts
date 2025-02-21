@@ -1,7 +1,6 @@
 import path from "path";
 import {
     Class,
-    Attribute,
     Association,
     deserializeJsonToClasses,
     ModelTypeToCodeType,
@@ -10,7 +9,17 @@ import {
     pluralize,
     camelCaseToTitleCase,
     getClassAndParentAttributes,
+    getNavigableAssociationsForClass,
+    GetRefDataClasses,
 } from "../../../genmodel";
+import {
+    Build_api_ts_rows_for_class,
+    Build_layout_server_ts,
+    Build_Types_For_Class,
+    Build_Layout_Menu_Content_For_Class,
+    Build_Page_Server_ts_Content,
+    Build_Svelte_Main_For_Type_Content,
+} from "./helper";
 import * as fs from "fs";
 
 const genModelPath = "./output/genModel.json";
@@ -20,249 +29,52 @@ const model = deserializeJsonToClasses(genModelPath);
 if (!fs.existsSync(outputRoot)) {
     fs.mkdirSync(outputRoot, { recursive: true });
 }
-const doSchemaAttributes = (c: Class, schemaContent: string): string => {
-    if (c.parent?.name !== undefined) {
-        schemaContent += doSchemaAttributes(c.parent, schemaContent);
-    }
-    for (const a of c.attributes) {
-        if (a.name === "id") {
-            continue;
-        }
-        let zodType = ModelTypeToCodeType(a.type, "zod");
-        schemaContent += `  ${a.name}: `;
-        if (zodType === "date") {
-            schemaContent += `z.preprocess((arg) => {\n`;
-            schemaContent += `   if (typeof arg ==='string' || arg instanceof Date) {\n`;
-            schemaContent += `     const date = new Date(arg);\n`;
-            schemaContent += `     return isNaN(date.getTime()) ? undefined : date;\n`;
-            schemaContent += `   }\n`;
-            schemaContent += `   return undefined;\n`;
-            schemaContent += `}, z.date({ required_error: "" })),\n`;
-        } else {
-            if (a.type === "int") {
-                schemaContent += `z.number().int().positive(),\n`;
-            } else {
-                schemaContent += ` z.${zodType}(),\n`;
-            }
-        }
-    }
-    return schemaContent;
-};
-const doSchemaRefDataAssociations = (
-    c: Class,
-    refdataassociation: Association[],
-    schemaContent: string = ""
-): string => {
-    if (c.parent?.name !== undefined) {
-        schemaContent += doSchemaRefDataAssociations(
-            c.parent,
-            getRefDataAssociationsForClass(c.parent, model),
-            schemaContent
-        );
-    }
-    for (const a of refdataassociation) {
-        schemaContent += `  ${a.target.class.name}id: `;
-        schemaContent += `z.number().int().positive(),\n`;
-    }
-    return schemaContent;
-};
-const doSchemaCollectionAssociations = (
-    c: Class,
-    collectionAssociations: Association[],
-    schemaContent: string = ""
-): string => {
-    if (c.parent?.name !== undefined) {
-        schemaContent += doSchemaCollectionAssociations(
-            c.parent,
-            getCollectionAssociationsForClass(c.parent, model),
-            schemaContent
-        );
-    }
-    for (const a of collectionAssociations) {
-        schemaContent += `  ${a.source.class.name}id: `;
-        schemaContent += `z.number().int().positive(),\n`;
-    }
-    return schemaContent;
-};
-const buildapitsrowsForClass = (c: Class): string => {
-    if (c.isAbstract) {
-        return "";
-    }
-    let apitsContent = "";
+// const buildtypesveltemainContent = (c: Class, r: Association[]): string => {
+//     if (c.isAbstract) {
+//         return "";
+//     }
+//     const templatePath = path.join(__dirname, "../templates/+page.svelte");
+//     let templateContent = fs.readFileSync(templatePath, "utf8");
+//     let typeImports = ` ${c.name}`;
+//     for (const a of r) {
+//         typeImports += `, ${a.target.class.name}`;
+//     }
+//     templateContent = templateContent.replace("{{typeImports}}", typeImports);
+//     templateContent = templateContent.replace("{{classuppertext}}", c.name);
+//     templateContent = templateContent.replace(
+//         "{{classlowertext}}",
+//         `${c.name.toLowerCase()}`
+//     );
+//     let assignments = "";
 
-    apitsContent += `export const get${pluralize(c.name)} = () =>  api.get('/${
-        c.name
-    }');\n`;
-    apitsContent +=
-        `export const get${c.name}ById = (id: number) =>  api.get(` +
-        "`" +
-        `/${c.name}/` +
-        "${id}`" +
-        `);\n`;
-    apitsContent += `export const create${c.name} = (data: any) =>  api.post('/${c.name}', data);\n`;
-    apitsContent +=
-        `export const update${c.name} = (id: number, data: any) =>  api.put(` +
-        "`" +
-        `/${c.name}/` +
-        "${id}`" +
-        ", data);\n";
-    apitsContent +=
-        `export const delete${c.name} = (id: number) =>  api.delete(` +
-        "`" +
-        `/${c.name}/` +
-        "${id}`" +
-        ");\n";
-    apitsContent += `\n`;
-    return apitsContent;
-};
-const doTypeAttributes = (
-    c: Class,
-    r: Association[],
-    typeContent: string = ""
-): string => {
-    if (c.parent?.name !== undefined) {
-        typeContent += doTypeAttributes(
-            c.parent,
-            getRefDataAssociationsForClass(c.parent, model),
-            typeContent
-        );
-    }
-    for (const a of c.attributes) {
-        let type = ModelTypeToCodeType(a.type, "typescript");
-        if (
-            !(
-                type === "number" ||
-                type === "boolean" ||
-                type === "date" ||
-                type === "datetime"
-            )
-        )
-            type = "string";
-        typeContent += `  ${a.name}${
-            type === "boolean" ? "?" : ""
-        }: ${type};\n`;
-    }
-    for (const a of r) {
-        typeContent += `  ${a.target.class.name}id: number;\n`;
-    }
-    return typeContent;
-};
-const buildtypesForClass = (c: Class, r: Association[]): string => {
-    let typeContent = "";
-
-    if (c.isAbstract) {
-        return "";
-    }
-    typeContent += `export interface ${c.name}\n`;
-    typeContent += "{\n";
-    typeContent += doTypeAttributes(c, r);
-    typeContent += "}\n";
-    return typeContent;
-};
-const buildLayoutMenuContentForClass = (c: Class): string => {
-    let layoutMenuContent = "";
-    layoutMenuContent += `<li class="menu-item">\n`;
-    layoutMenuContent += `  <a href="/${c.name.toLowerCase()}" class="menu-link">${pluralize(
-        c.name
-    )}</a>\n`;
-    layoutMenuContent += `</li>\n`;
-    return layoutMenuContent;
-};
-const buildpageplustsContent = (c: Class, r: Association[]): string => {
-    if (c.isAbstract) {
-        return "";
-    }
-    const templatePath = path.join(__dirname, "../templates/+page.server.ts");
-    let templateContent = fs.readFileSync(templatePath, "utf8");
-    let typeImports = ` ${c.name}`;
-    let apiImports = `get${pluralize(c.name)}`;
-    let responses = ` ${c.name.toLowerCase()}Response`;
-    let promises = `get${pluralize(c.name)}()`;
-    let statuscheck = `${c.name.toLowerCase()}Response.status === 200`;
-    let assignments = `const ${c.name.toLowerCase()}s: ${
-        c.name
-    }[] = ${c.name.toLowerCase()}Response.data;\n`;
-    let returns = `${c.name.toLowerCase()}s`;
-    if (r.length > 0) {
-        for (const a of r) {
-            typeImports += `, ${a.target.class.name}`;
-            apiImports += `, get${pluralize(a.target.class.name)}`;
-            responses += `, ${a.target.class.name.toLowerCase()}Response`;
-            promises += `, get${pluralize(a.target.class.name)}()`;
-            statuscheck += ` && ${a.target.class.name.toLowerCase()}Response.status === 200`;
-            assignments += `\nconst ${a.target.class.name.toLowerCase()}: ${
-                a.target.class.name
-            }[] = ${a.target.class.name.toLowerCase()}Response.data;\n`;
-            returns += `, ${a.target.class.name.toLowerCase()}`;
-        }
-    }
-    apiImports += `, delete${c.name}`;
-    templateContent = templateContent.replace("{{typeImports}}", typeImports);
-    templateContent = templateContent.replace("{{apiImports}}", apiImports);
-    templateContent = templateContent.replace("{{responses}}", responses);
-    templateContent = templateContent.replace("{{promises}}", promises);
-    templateContent = templateContent.replace("{{statuscheck}}", statuscheck);
-    templateContent = templateContent.replace("{{assignments}}", assignments);
-    templateContent = templateContent.replace("{{returns}}", returns);
-    let classlowertext = c.name.toLowerCase();
-    templateContent = templateContent.replace(
-        new RegExp("{{classlowertext}}", "g"),
-        classlowertext
-    );
-
-    let classuppertext = c.name;
-    templateContent = templateContent.replace(
-        new RegExp("{{classuppertext}}", "g"),
-        classuppertext
-    );
-    return templateContent;
-};
-const buildtypesveltemainContent = (c: Class, r: Association[]): string => {
-    if (c.isAbstract) {
-        return "";
-    }
-    const templatePath = path.join(__dirname, "../templates/+page.svelte");
-    let templateContent = fs.readFileSync(templatePath, "utf8");
-    let typeImports = ` ${c.name}`;
-    for (const a of r) {
-        typeImports += `, ${a.target.class.name}`;
-    }
-    templateContent = templateContent.replace("{{typeImports}}", typeImports);
-    templateContent = templateContent.replace("{{classuppertext}}", c.name);
-    templateContent = templateContent.replace(
-        "{{classlowertext}}",
-        `${c.name.toLowerCase()}`
-    );
-    let assignments = "";
-
-    for (const a of r) {
-        assignments += `let ${pluralize(a.target.class.name).toLowerCase()}: ${
-            a.target.class.name
-        }[] = data.${a.target.class.name.toLowerCase()};\n`;
-    }
-    templateContent = templateContent.replace("{{assignments}}", assignments);
-    let getrefdatalogic = "";
-    for (const a of r) {
-        getrefdatalogic += `function get${a.target.class.name}Description(id: number): string{\n`;
-        getrefdatalogic += `  const item = ${pluralize(
-            a.target.class.name.toLowerCase()
-        )}.find((item) => item.id === id);\n`;
-        getrefdatalogic += `  return item ? item.typeLongDescription : '';\n`;
-        getrefdatalogic += `}\n`;
-    }
-    templateContent = templateContent.replace(
-        "{{getRefDataLogic}}",
-        getrefdatalogic
-    );
-    let html = generateHtmlForClass(c, r);
-    templateContent = templateContent.replace("{{html}}", html);
-    let totalwidthitems = c.attributes.length + r.length + 2;
-    templateContent = templateContent.replace(
-        "{{noOfCols}}",
-        `${totalwidthitems}`
-    );
-    return templateContent;
-};
+//     for (const a of r) {
+//         assignments += `let ${pluralize(a.target.class.name).toLowerCase()}: ${
+//             a.target.class.name
+//         }[] = data.${a.target.class.name.toLowerCase()};\n`;
+//     }
+//     templateContent = templateContent.replace("{{assignments}}", assignments);
+//     let getrefdatalogic = "";
+//     for (const a of r) {
+//         getrefdatalogic += `function get${a.target.class.name}Description(id: number): string{\n`;
+//         getrefdatalogic += `  const item = ${pluralize(
+//             a.target.class.name.toLowerCase()
+//         )}.find((item) => item.id === id);\n`;
+//         getrefdatalogic += `  return item ? item.typeLongDescription : '';\n`;
+//         getrefdatalogic += `}\n`;
+//     }
+//     templateContent = templateContent.replace(
+//         "{{getRefDataLogic}}",
+//         getrefdatalogic
+//     );
+//     let html = generateHtmlForClass(c, r);
+//     templateContent = templateContent.replace("{{html}}", html);
+//     let totalwidthitems = c.attributes.length + r.length + 2;
+//     templateContent = templateContent.replace(
+//         "{{noOfCols}}",
+//         `${totalwidthitems}`
+//     );
+//     return templateContent;
+// };
 const buildpluspagetseditContent = (c: Class, r: Association[]): string => {
     if (c.isAbstract) {
         return "";
@@ -334,7 +146,7 @@ const buildpluspagesvelteeditContent = (c: Class, r: Association[]): string => {
         classuppertext
     );
 
-    let html = generateHtmlForEdit(c, r);
+    let html = generateHtmlForEdit(c);
     templateContent = templateContent.replace("{{html}}", html);
     let totalwidthitems = c.attributes.length + r.length + 2;
     templateContent = templateContent.replace(
@@ -354,25 +166,42 @@ const typesveltemainContent: { [key: string]: string } = {};
 const typespluspagetseditContent: { [key: string]: string } = {};
 const typespluspagesvelteeditContent: { [key: string]: string } = {};
 let mainLayoutMenuContent = "";
+const RefDataTypes = GetRefDataClasses(model);
+const lsservertsTemplate = fs.readFileSync(
+    path.join(__dirname, "../templates/+layout.server.ts"),
+    "utf8"
+);
+const layoutserverts = Build_layout_server_ts(RefDataTypes, lsservertsTemplate);
+fs.writeFileSync(
+    outputRoot + "/routes/+layout.server.ts",
+    layoutserverts,
+    "utf8"
+);
 
 for (const c of model.classes) {
     // Generate api.ts content
     if (!c.isAbstract) {
-        apitsContent += buildapitsrowsForClass(c);
-        mainLayoutMenuContent += buildLayoutMenuContentForClass(c);
+        apitsContent += Build_api_ts_rows_for_class(c);
+        mainLayoutMenuContent += Build_Layout_Menu_Content_For_Class(c);
     }
-    const refDataAssociations = getRefDataAssociationsForClass(c, model);
-    // find 1 to * (e.g. class with collections)
+    const refDataAssociations = getRefDataAssociationsForClass(
+        c,
+        model.associations
+    );
     const collectionAssociations = getCollectionAssociationsForClass(c, model);
 
     // Generate types content and write to src/lib/types.ts
-    typeContent += buildtypesForClass(c, refDataAssociations);
+    typeContent += Build_Types_For_Class(
+        c,
+        model.associations,
+        refDataAssociations
+    );
     if (!c.isAbstract) {
-        typepageplustsContent[c.name] = buildpageplustsContent(
+        typepageplustsContent[c.name] = Build_Page_Server_ts_Content(
             c,
             refDataAssociations
         );
-        typesveltemainContent[c.name] = buildtypesveltemainContent(
+        typesveltemainContent[c.name] = Build_Svelte_Main_For_Type_Content(
             c,
             refDataAssociations
         );
@@ -398,7 +227,11 @@ templateContent = templateContent.replace(
     "{{menuitems}}",
     mainLayoutMenuContent
 );
-fs.writeFileSync(outputRoot + "/routes/layout.svelte", templateContent, "utf8");
+fs.writeFileSync(
+    outputRoot + "/routes/+layout.svelte",
+    templateContent,
+    "utf8"
+);
 
 for (const c of model.classes) {
     if (!c.isAbstract) {
@@ -418,7 +251,6 @@ for (const c of model.classes) {
         );
         filePath =
             outputRoot + "/routes/" + c.name.toLowerCase() + "/[id]/edit";
-        console.log(filePath);
         if (!fs.existsSync(filePath)) {
             fs.mkdirSync(filePath, { recursive: true });
         }
@@ -434,10 +266,12 @@ for (const c of model.classes) {
         );
     }
 }
-function generateHtmlForEdit(c: Class, r: Association[]) {
+function generateHtmlForEdit(c: Class) {
     let html = `<h1 class="my-6 text-center text-2xl font-bold">Edit ${c.name}</h1>\n`;
     html += `<form on:submit|preventDefault={save${c.name}} class="grid grid-cols-2 gap-4">\n`;
-    for (const a of getClassAndParentAttributes(c)) {
+    const attrs = getClassAndParentAttributes(c);
+    const assocs = getNavigableAssociationsForClass(c, model.associations);
+    for (const a of attrs) {
         let div = `   <div class="flex items-center">\n`;
         div += `      <label for=${a.name} class="w-1/3">${camelCaseToTitleCase(
             a.name
@@ -451,28 +285,30 @@ function generateHtmlForEdit(c: Class, r: Association[]) {
         div += `   </div>\n`;
         html += div;
     }
-    for (const a of r) {
-        let div = `   <div class="flex items-center">\n`;
-        div += `      <label for="${
-            a.target.class.name
-        }" class="w-1/3">${camelCaseToTitleCase(
-            a.target.class.name
-        )}:</label>\n`;
-        div += `      <select\n`;
-        div += `         id="${a.target.class.name}"\n`;
-        div += `         bind:value={${c.name.toLowerCase()}.${
-            a.target.class.name
-        }id}\n`;
-        div += `         class="w-2/3 rounded border border-gray-300 p-2"\n`;
-        div += `      >\n`;
-        div += `         {#each ${pluralize(
-            a.target.class.name.toLowerCase()
-        )} as item}\n`;
-        div += `            <option value={item.id}>{item.typeLongDescription}</option>\n`;
-        div += `         {/each}\n`;
-        div += `      </select>\n`;
-        div += `   </div>\n`;
-        html += div;
+    for (const a of assocs) {
+        if (a.target.multiplicity === "1") {
+            let div = `   <div class="flex items-center">\n`;
+            div += `      <label for="${
+                a.target.class.name
+            }" class="w-1/3">${camelCaseToTitleCase(
+                a.target.class.name
+            )}:</label>\n`;
+            div += `      <select\n`;
+            div += `         id="${a.target.class.name}"\n`;
+            div += `         bind:value={${c.name.toLowerCase()}.${
+                a.target.class.name
+            }id}\n`;
+            div += `         class="w-2/3 rounded border border-gray-300 p-2"\n`;
+            div += `      >\n`;
+            div += `         {#each ${pluralize(
+                a.target.class.name.toLowerCase()
+            )} as item}\n`;
+            div += `            <option value={item.id}>{item.typeLongDescription}</option>\n`;
+            div += `         {/each}\n`;
+            div += `      </select>\n`;
+            div += `   </div>\n`;
+            html += div;
+        }
     }
     let div = `<div class="col-span-2 flex justify-between">\n`;
     div += `   <button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"\n`;

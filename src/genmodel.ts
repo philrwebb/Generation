@@ -60,7 +60,7 @@ export const serializeClassesToJson = (model: Model, filePath: string) => {
 };
 
 export const deserializeJsonToClasses = (filePath: string): Model => {
-    console.log(`Execution path: ${process.cwd()}`);
+    // console.log(`Execution path: ${process.cwd()}`);
     const jsonContent = fs.readFileSync(filePath, "utf8");
     return JSON.parse(jsonContent) as Model;
 };
@@ -188,17 +188,17 @@ export const pluralize = (word: string): string => {
     return word + "s";
 };
 
-export const getRefDataAssociationsForClass = (
-    c: Class,
-    model: Model
-): Association[] => {
-    return model.associations.filter(
-        (a) =>
-            a.source.multiplicity === "*" &&
-            a.target.multiplicity === "1" &&
-            a.source.class.name === c.name // this class is the parent
-    );
-};
+// export const getRefDataAssociationsForClass = (
+//     c: Class,
+//     model: Model
+// ): Association[] => {
+//     return model.associations.filter(
+//         (a) =>
+//             a.source.multiplicity === "*" &&
+//             a.target.multiplicity === "1" &&
+//             a.source.class.name === c.name // this class is the parent
+//     );
+// };
 
 export const getCollectionAssociationsForClass = (
     c: Class,
@@ -217,4 +217,59 @@ export const camelCaseToTitleCase = (str: string): string => {
     const result = str.replace(/([A-Z])/g, " $1");
     // Capitalize the first letter of the resulting string
     return result.charAt(0).toUpperCase() + result.slice(1);
+};
+
+export const getClassAndParentAttributes = (
+    c: Class,
+    a: Attribute[] = []
+): Attribute[] => {
+    // if (a.length === 0) console.log(c.name);
+    if (c.parent && Object.keys(c.parent).length > 0) {
+        a = getClassAndParentAttributes(c.parent, a);
+    }
+    return [...a, ...c.attributes];
+};
+
+export const getNavigableAssociationsForClass = (
+    c: Class,
+    allAssociations: Association[]
+): Association[] => {
+    // Get associations where the source is the class and navigability is true
+    let associations = allAssociations.filter(
+        (a) => a.source.class.name === c.name && a.target.navagability
+    );
+    // Recursively include associations from parent's chain if parent exists and is non-empty
+    if (c.parent && Object.keys(c.parent).length > 0) {
+        associations = [
+            ...getNavigableAssociationsForClass(c.parent, allAssociations),
+            ...associations,
+        ];
+    }
+    return associations;
+};
+
+export const getRefDataAssociationsForClass = (
+    c: Class,
+    associations: Association[]
+): Association[] => {
+    return associations.filter(
+        (a) =>
+            a.source.multiplicity === "*" &&
+            a.target.multiplicity === "1" &&
+            a.source.class.name === c.name // this class is the parent
+    );
+};
+
+export const GetRefDataClasses = (model: Model): Class[] => {
+    const refDataClasses: Class[] = [];
+    for (const c of model.classes) {
+        if (
+            c.parent &&
+            Object.keys(c.parent).length > 0 &&
+            c.parent.name === "ReferenceBase"
+        ) {
+            refDataClasses.push(c);
+        }
+    }
+    return refDataClasses;
 };

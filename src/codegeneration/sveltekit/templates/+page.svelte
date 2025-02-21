@@ -2,12 +2,14 @@
 	import type { {{typeImports}} } from '$lib/types';
 	let { data } = $props();
 	let pbaseList: {{classuppertext}}[] = data.{{classlowertext}}s;
-	{{assignments}}
 	let showAll = $state(false);
 	let showDeleteModal = $state(false);
 	let deleteId: number | null = $state(null);
 
-	{{getRefDataLogic}}
+	function getTypeDescription(id: number, typeName: string): string {
+		const item = data.ReferenceData[typeName].find((item: ReferenceBase) => item.id === id);
+		return item ? item.typeLongDescription : '';
+	}
 
 	function filteredActive() {
 		return showAll ? pbaseList : pbaseList.filter((item) => item.active);
