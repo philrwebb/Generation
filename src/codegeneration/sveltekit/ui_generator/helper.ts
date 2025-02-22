@@ -4,10 +4,17 @@ import {
     pluralize,
     getRefDataAssociationsForClass,
     ModelTypeToCodeType,
+    getClassAndParentAttributes,
+    getNavigableAssociationsForClass,
+    camelCaseToTitleCase,
 } from "../../../genmodel";
-import fs from "fs";
-import path from "path";
 
+/* $lib/api.ts
+    Build_api_ts_rows_for_class generates the api.ts rows for a class
+    @param c: Class
+    @returns string
+
+*/
 export const Build_api_ts_rows_for_class = (c: Class): string => {
     if (c.isAbstract) {
         return "";
@@ -39,6 +46,12 @@ export const Build_api_ts_rows_for_class = (c: Class): string => {
     apitsContent += `\n`;
     return apitsContent;
 };
+/* +layout.server.ts
+    Build_layout_server_ts generates the layout.server.ts file content
+    @param refDataClasses: Class[]
+    @param template: string
+    @returns string
+*/
 export const Build_layout_server_ts = (
     refDataClasses: Class[],
     template: string
@@ -86,10 +99,18 @@ export const Build_layout_server_ts = (
     console.log(template);
     return template;
 };
+/* Used by Build_Types_For_Class
+   Do_Type_Attributes generates the type attributes for a class
+    @param c: Class
+    @param r: Association[]
+    @param ma: Association[]
+    @param typeContent: string
+    @returns string
+*/
 const Do_Type_Attributes = (
     c: Class,
-    r: Association[],
     ma: Association[],
+    r: Association[],
     typeContent: string = ""
 ): string => {
     if (c.parent?.name !== undefined) {
@@ -120,6 +141,13 @@ const Do_Type_Attributes = (
     }
     return typeContent;
 };
+/* $lib/types.ts
+    Build_Types_For_Class generates the type content for a class
+    @param c: Class
+    @param ma: Association[]
+    @param r: Association[]
+    @returns string
+*/
 export const Build_Types_For_Class = (
     c: Class,
     ma: Association[],
@@ -136,6 +164,11 @@ export const Build_Types_For_Class = (
     typeContent += "}\n";
     return typeContent;
 };
+/* +layout.svelte
+    Build_Layout_Menu_Content_For_Class generates the layout menu content for a class
+    @param c: Class
+    @returns string
+*/
 export const Build_Layout_Menu_Content_For_Class = (c: Class): string => {
     let layoutMenuContent = "";
     layoutMenuContent += `<li class="menu-item">\n`;
@@ -145,15 +178,21 @@ export const Build_Layout_Menu_Content_For_Class = (c: Class): string => {
     layoutMenuContent += `</li>\n`;
     return layoutMenuContent;
 };
+/* +page.server.ts
+    Build_Page_Server_ts_Content generates the server.ts file content for a class
+    @param c: Class
+    @param r: Association[]
+    @param templateContent: string
+    @returns string
+*/
 export const Build_Page_Server_ts_Content = (
     c: Class,
-    r: Association[]
+    r: Association[],
+    templateContent: string
 ): string => {
     if (c.isAbstract) {
         return "";
     }
-    const templatePath = path.join(__dirname, "../templates/+page.server.ts");
-    let templateContent = fs.readFileSync(templatePath, "utf8");
     let typeImports = ` ${c.name}`;
     let apiImports = `get${pluralize(c.name)}`;
     let responses = ` ${c.name.toLowerCase()}Response`;
@@ -184,15 +223,21 @@ export const Build_Page_Server_ts_Content = (
     );
     return templateContent;
 };
+/* +page.svelte
+    Build_Page_Svelte_Main_For_Type_Content generates the svelte main content for a class
+    @param c: Class
+    @param r: Association[]
+    @param templateContent: string
+    @returns string
+*/
 export const Build_Svelte_Main_For_Type_Content = (
     c: Class,
-    r: Association[]
+    r: Association[],
+    templateContent: string
 ): string => {
     if (c.isAbstract) {
         return "";
     }
-    const templatePath = path.join(__dirname, "../templates/+page.svelte");
-    let templateContent = fs.readFileSync(templatePath, "utf8");
     let typeImports = ` ${c.name}`;
     for (const a of r) {
         typeImports += `, ${a.target.class.name}`;
@@ -233,7 +278,13 @@ export const Build_Svelte_Main_For_Type_Content = (
     );
     return templateContent;
 };
-function generateHtmlForClass(c: Class, r: Association[]) {
+/* +page.svelte html
+    generateHtmlForClass generates the html for a class
+    @param c: Class
+    @param r: Association[]
+    @returns string
+*/
+const generateHtmlForClass = (c: Class, r: Association[]): string => {
     let html = `
 <h1 class="my-6 text-center text-2xl font-bold">Person</h1>    
 <div class="mb-4 flex items-center">
@@ -337,4 +388,169 @@ function generateHtmlForClass(c: Class, r: Association[]) {
 </style>
 `;
     return html;
-}
+};
+/* [id]/+page.server.ts
+    Build_Page_server_ts_Edit_Content generates the server.ts file content for a class in the Edit tree
+    @param c: Class
+    @param r: Association[]
+    @param templateContent: string
+    @returns string
+*/
+export const Build_Page_server_ts_Edit_Content = (
+    c: Class,
+    r: Association[],
+    templateContent: string
+): string => {
+    if (c.isAbstract) {
+        return "";
+    }
+    let typeImports = ` ${c.name}`;
+    let apiImports = `get${c.name}ById`;
+    let responses = ` ${c.name.toLowerCase()}Response`;
+    let promises = `get${c.name}ById(id)`;
+    let statuscheck = `${c.name.toLowerCase()}Response.status === 200`;
+    let assignments = `const ${c.name.toLowerCase()}: ${
+        c.name
+    } = ${c.name.toLowerCase()}Response.data;\n`;
+    let returns = `${c.name.toLowerCase()}`;
+    if (r.length > 0) {
+        for (const a of r) {
+            typeImports += `, ${a.target.class.name}`;
+            apiImports += `, get${pluralize(a.target.class.name)}`;
+            responses += `, ${a.target.class.name.toLowerCase()}Response`;
+            promises += `, get${pluralize(a.target.class.name)}()`;
+            statuscheck += ` && ${a.target.class.name.toLowerCase()}Response.status === 200`;
+            assignments += `\nconst ${a.target.class.name.toLowerCase()}: ${
+                a.target.class.name
+            }[] = ${a.target.class.name.toLowerCase()}Response.data;\n`;
+            returns += `, ${a.target.class.name.toLowerCase()}`;
+        }
+    }
+    templateContent = templateContent.replace("{{typeImports}}", typeImports);
+    templateContent = templateContent.replace("{{apiImports}}", apiImports);
+    templateContent = templateContent.replace("{{responses}}", responses);
+    templateContent = templateContent.replace("{{promises}}", promises);
+    templateContent = templateContent.replace("{{statuscheck}}", statuscheck);
+    templateContent = templateContent.replace("{{assignments}}", assignments);
+    templateContent = templateContent.replace("{{returns}}", returns);
+    return templateContent;
+};
+/* [id]/+page.svelte
+    Build_Page_Svelte_Edit_Content generates the svelte edit content for a class
+    @param c: Class
+    @param ma: Association[]
+    @param r: Association[]
+    @param templateContent: string
+    @returns string
+*/
+export const Build_Page_Svelte_Edit_Content = (
+    c: Class,
+    ma: Association[],
+    r: Association[],
+    templateContent: string
+): string => {
+    if (c.isAbstract) {
+        return "";
+    }
+
+    let typeImports = ` ${c.name}`;
+    for (const a of r) {
+        typeImports += `, ${a.target.class.name}`;
+    }
+    templateContent = templateContent.replace("{{typeImports}}", typeImports);
+    let apiImports = `update${c.name}`;
+    templateContent = templateContent.replace("{{apiImports}}", apiImports);
+    let assignments = `let ${c.name.toLowerCase()}: ${
+        c.name
+    } = data.${c.name.toLowerCase()};\n`;
+    for (const a of r) {
+        assignments += `let ${pluralize(a.target.class.name).toLowerCase()}: ${
+            a.target.class.name
+        }[] = data.${a.target.class.name.toLowerCase()};\n`;
+    }
+    templateContent = templateContent.replace("{{assignments}}", assignments);
+    let classlowertext = c.name.toLowerCase();
+    templateContent = templateContent.replace(
+        new RegExp("{{classlowertext}}", "g"),
+        classlowertext
+    );
+
+    let classuppertext = c.name;
+    templateContent = templateContent.replace(
+        new RegExp("{{classuppertext}}", "g"),
+        classuppertext
+    );
+
+    let html = generateHtmlForEdit(c, ma);
+    templateContent = templateContent.replace("{{html}}", html);
+    let totalwidthitems = c.attributes.length + r.length + 2;
+    templateContent = templateContent.replace(
+        "{{noOfCols}}",
+        `${totalwidthitems}`
+    );
+    return templateContent;
+};
+/* [id]/+page.svelte html
+    generateHtmlForEdit generates the html for the edit tree
+    @param c: Class
+    @param ma: Association[]
+    @returns string
+*/
+const generateHtmlForEdit = (c: Class, ma: Association[] = []): string => {
+    let html = `<h1 class="my-6 text-center text-2xl font-bold">Edit ${c.name}</h1>\n`;
+    html += `<form on:submit|preventDefault={save${c.name}} class="grid grid-cols-2 gap-4">\n`;
+    const attrs = getClassAndParentAttributes(c);
+    const assocs = getNavigableAssociationsForClass(c, ma);
+    for (const a of attrs) {
+        let div = `   <div class="flex items-center">\n`;
+        div += `      <label for=${a.name} class="w-1/3">${camelCaseToTitleCase(
+            a.name
+        )}:</label>\n`;
+        div += `      <input id=${a.name} type=${ModelTypeToCodeType(
+            a.type,
+            "html"
+        )} bind:value={${c.name.toLowerCase()}.${
+            a.name
+        }} class="w-2/3 rounded border border-gray-300 p-2"/>\n`;
+        div += `   </div>\n`;
+        html += div;
+    }
+    for (const a of assocs) {
+        if (a.target.multiplicity === "1") {
+            let div = `   <div class="flex items-center">\n`;
+            div += `      <label for="${
+                a.target.class.name
+            }" class="w-1/3">${camelCaseToTitleCase(
+                a.target.class.name
+            )}:</label>\n`;
+            div += `      <select\n`;
+            div += `         id="${a.target.class.name}"\n`;
+            div += `         bind:value={${c.name.toLowerCase()}.${
+                a.target.class.name
+            }id}\n`;
+            div += `         class="w-2/3 rounded border border-gray-300 p-2"\n`;
+            div += `      >\n`;
+            div += `         {#each ${pluralize(
+                a.target.class.name.toLowerCase()
+            )} as item}\n`;
+            div += `            <option value={item.id}>{item.typeLongDescription}</option>\n`;
+            div += `         {/each}\n`;
+            div += `      </select>\n`;
+            div += `   </div>\n`;
+            html += div;
+        }
+    }
+    let div = `<div class="col-span-2 flex justify-between">\n`;
+    div += `   <button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"\n`;
+    div += `      >Save</button\n`;
+    div += `   >\n`;
+    div += `   <button\n`;
+    div += `      type="button"\n`;
+    div += `      on:click={() => goto('/${c.name.toLowerCase()}')}\n`;
+    div += `      class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-700">Cancel</button\n`;
+    div += `   >\n`;
+    div += `</div>\n`;
+    html += div;
+    html += `</form>`;
+    return html;
+};
