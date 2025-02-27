@@ -15,6 +15,8 @@ import {
     Build_Svelte_Main_For_Type_Content,
     Build_Page_server_ts_Edit_Content,
     Build_Page_Svelte_Edit_Content,
+    Build__Page_server_ts_Create_Content,
+    Build_Page_Svelte_Create_Content,
 } from "./helper";
 
 const genModelPath = "./output/genModel.json";
@@ -43,6 +45,8 @@ const typepageplustsContent: { [key: string]: string } = {};
 const typesveltemainContent: { [key: string]: string } = {};
 const typespluspagetseditContent: { [key: string]: string } = {};
 const typespluspagesvelteeditContent: { [key: string]: string } = {};
+const typespluspagetscreateContent: { [key: string]: string } = {};
+const typespluspagesveltecreateContent: { [key: string]: string } = {};
 
 for (const c of model.classes) {
     // Generate api.ts content
@@ -82,7 +86,7 @@ for (const c of model.classes) {
             templateContent
         );
         templateContent = fs.readFileSync(
-            path.join(__dirname, "../templates/edit/+page.ts"),
+            path.join(__dirname, "../templates/edit/+page.server.ts"),
             "utf8"
         );
         typespluspagetseditContent[c.name] = Build_Page_server_ts_Edit_Content(
@@ -100,6 +104,22 @@ for (const c of model.classes) {
             refDataAssociations,
             templateContent
         );
+        templateContent = fs.readFileSync(
+            path.join(__dirname, "../templates/create/+page.server.ts"),
+            "utf8"
+        );
+        typespluspagetscreateContent[c.name] =
+            Build__Page_server_ts_Create_Content(c, templateContent);
+        templateContent = fs.readFileSync(
+            path.join(__dirname, "../templates/create/+page.svelte"),
+            "utf8"
+        );
+        typespluspagesveltecreateContent[c.name] =
+            Build_Page_Svelte_Create_Content(
+                c,
+                templateContent,
+                model.associations
+            );
     }
 }
 
@@ -158,13 +178,27 @@ for (const c of model.classes) {
             fs.mkdirSync(filePath, { recursive: true });
         }
         fs.writeFileSync(
-            filePath + "/+page.ts",
+            filePath + "/+page.server.ts",
             typespluspagetseditContent[c.name],
             "utf8"
         );
         fs.writeFileSync(
             filePath + "/+page.svelte",
             typespluspagesvelteeditContent[c.name],
+            "utf8"
+        );
+        filePath = outputRoot + "/routes/" + c.name.toLowerCase() + "/create";
+        if (!fs.existsSync(filePath)) {
+            fs.mkdirSync(filePath, { recursive: true });
+        }
+        fs.writeFileSync(
+            filePath + "/+page.server.ts",
+            typespluspagetscreateContent[c.name],
+            "utf8"
+        );
+        fs.writeFileSync(
+            filePath + "/+page.svelte",
+            typespluspagesveltecreateContent[c.name],
             "utf8"
         );
     }

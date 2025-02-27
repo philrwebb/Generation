@@ -137,7 +137,7 @@ export const ModelTypeToCodeType = (
         if (codeLanguage === "typescript") return "Date";
         if (codeLanguage === "csharp") return "DateTime";
         if (codeLanguage === "zod") return "date";
-        if (codeLanguage === "html") return "datetime";
+        if (codeLanguage === "html") return "date";
     }
     if (modeltype === "date") {
         if (codeLanguage === "python") return "date";
@@ -187,18 +187,6 @@ export const pluralize = (word: string): string => {
 
     return word + "s";
 };
-
-// export const getRefDataAssociationsForClass = (
-//     c: Class,
-//     model: Model
-// ): Association[] => {
-//     return model.associations.filter(
-//         (a) =>
-//             a.source.multiplicity === "*" &&
-//             a.target.multiplicity === "1" &&
-//             a.source.class.name === c.name // this class is the parent
-//     );
-// };
 
 export const getCollectionAssociationsForClass = (
     c: Class,

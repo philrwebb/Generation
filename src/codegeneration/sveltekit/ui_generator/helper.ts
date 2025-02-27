@@ -271,7 +271,8 @@ export const Build_Svelte_Main_For_Type_Content = (
     );
     let html = generateHtmlForClass(c, r);
     templateContent = templateContent.replace("{{html}}", html);
-    let totalwidthitems = c.attributes.length + r.length + 2;
+    const attrs = getClassAndParentAttributes(c);
+    let totalwidthitems = attrs.length + r.length;
     templateContent = templateContent.replace(
         "{{noOfCols}}",
         `${totalwidthitems}`
@@ -285,8 +286,9 @@ export const Build_Svelte_Main_For_Type_Content = (
     @returns string
 */
 const generateHtmlForClass = (c: Class, r: Association[]): string => {
+    const attrs = getClassAndParentAttributes(c);
     let html = `
-<h1 class="my-6 text-center text-2xl font-bold">Person</h1>    
+<h1 class="my-6 text-center text-2xl font-bold">${c.name}</h1>    
 <div class="mb-4 flex items-center">
 	<label for="showAll" class="mr-2">Show All:</label>
 	<input id="showAll" type="checkbox" bind:checked={showAll} />
@@ -294,7 +296,10 @@ const generateHtmlForClass = (c: Class, r: Association[]): string => {
 <div class="grid-container">\n
 `;
     html += `  <div class="grid-header">ID</div>\n`;
-    for (const a of c.attributes) {
+    for (const a of attrs) {
+        if (a.name === "active" || a.name === "id") {
+            continue;
+        }
         html += `  <div class="grid-header">${a.name}</div>\n`;
     }
     for (const a of r) {
@@ -303,7 +308,10 @@ const generateHtmlForClass = (c: Class, r: Association[]): string => {
     html += `  <div class="grid-header">Actions</div>\n`;
     html += `  {#each filteredActive() as item, index}\n`;
     html += `     {@render lineItem(index, item.active, item.id)}\n`;
-    for (const a of c.attributes) {
+    for (const a of attrs) {
+        if (a.name === "active" || a.name === "id") {
+            continue;
+        }
         if (a.type === "date") {
             html += `  {@render lineItem(index, item.active, new Date(item.${a.name}).toLocaleDateString().slice(0,10))}\n`;
         } else {
@@ -311,7 +319,9 @@ const generateHtmlForClass = (c: Class, r: Association[]): string => {
         }
     }
     for (const a of r) {
-        html += `  {@render lineItem(index, item.active, get${a.target.class.name}Description(item.${a.target.class.name}id))}\n`;
+        html += `  {@render lineItem(index, item.active, getTypeDescription(item.${
+            a.target.class.name
+        }id, '${pluralize(a.target.class.name.toLowerCase())}'))}\n`;
     }
     html += `
     		<div class="border border-gray-300 p-2 {index % 2 === 1 ? 'bg-gray-200' : ''} {item.active ? '' : 'text-red-500'} flex items-center space-x-2">
@@ -334,7 +344,7 @@ const generateHtmlForClass = (c: Class, r: Association[]): string => {
     html += `
 <div class="mt-4 flex justify-center">
 	<a href="/${c.name.toLowerCase()}/create" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700">
-		Add New Person
+		Add New ${c.name}
 	</a>
 </div>
 
@@ -404,35 +414,20 @@ export const Build_Page_server_ts_Edit_Content = (
     if (c.isAbstract) {
         return "";
     }
-    let typeImports = ` ${c.name}`;
-    let apiImports = `get${c.name}ById`;
-    let responses = ` ${c.name.toLowerCase()}Response`;
-    let promises = `get${c.name}ById(id)`;
-    let statuscheck = `${c.name.toLowerCase()}Response.status === 200`;
-    let assignments = `const ${c.name.toLowerCase()}: ${
-        c.name
-    } = ${c.name.toLowerCase()}Response.data;\n`;
-    let returns = `${c.name.toLowerCase()}`;
-    if (r.length > 0) {
-        for (const a of r) {
-            typeImports += `, ${a.target.class.name}`;
-            apiImports += `, get${pluralize(a.target.class.name)}`;
-            responses += `, ${a.target.class.name.toLowerCase()}Response`;
-            promises += `, get${pluralize(a.target.class.name)}()`;
-            statuscheck += ` && ${a.target.class.name.toLowerCase()}Response.status === 200`;
-            assignments += `\nconst ${a.target.class.name.toLowerCase()}: ${
-                a.target.class.name
-            }[] = ${a.target.class.name.toLowerCase()}Response.data;\n`;
-            returns += `, ${a.target.class.name.toLowerCase()}`;
-        }
-    }
-    templateContent = templateContent.replace("{{typeImports}}", typeImports);
-    templateContent = templateContent.replace("{{apiImports}}", apiImports);
-    templateContent = templateContent.replace("{{responses}}", responses);
-    templateContent = templateContent.replace("{{promises}}", promises);
-    templateContent = templateContent.replace("{{statuscheck}}", statuscheck);
-    templateContent = templateContent.replace("{{assignments}}", assignments);
-    templateContent = templateContent.replace("{{returns}}", returns);
+
+    // Replace all occurrences of classlowertext
+    const classlowertext = c.name.toLowerCase();
+    templateContent = templateContent.replace(
+        /{{classlowertext}}/g,
+        classlowertext
+    );
+
+    const classuppertext = c.name;
+    templateContent = templateContent.replace(
+        /{{classuppertext}}/g,
+        classuppertext
+    );
+
     return templateContent;
 };
 /* [id]/+page.svelte
@@ -452,7 +447,14 @@ export const Build_Page_Svelte_Edit_Content = (
     if (c.isAbstract) {
         return "";
     }
-
+    const attr = getClassAndParentAttributes(c);
+    let converts = "";
+    for (const a of attr) {
+        if (a.type === "date") {
+            converts += `item.${a.name} = new Date(item.${a.name}).toISOString().split('T')[0];\n`;
+        }
+    }
+    templateContent = templateContent.replace("{{converts}}", converts);
     let typeImports = ` ${c.name}`;
     for (const a of r) {
         typeImports += `, ${a.target.class.name}`;
@@ -483,7 +485,7 @@ export const Build_Page_Svelte_Edit_Content = (
 
     let html = generateHtmlForEdit(c, ma);
     templateContent = templateContent.replace("{{html}}", html);
-    let totalwidthitems = c.attributes.length + r.length + 2;
+    let totalwidthitems = attr.length + r.length + 2;
     templateContent = templateContent.replace(
         "{{noOfCols}}",
         `${totalwidthitems}`
@@ -498,18 +500,25 @@ export const Build_Page_Svelte_Edit_Content = (
 */
 const generateHtmlForEdit = (c: Class, ma: Association[] = []): string => {
     let html = `<h1 class="my-6 text-center text-2xl font-bold">Edit ${c.name}</h1>\n`;
-    html += `<form on:submit|preventDefault={save${c.name}} class="grid grid-cols-2 gap-4">\n`;
+    html += `<form method="POST" action="?/save" class="grid grid-cols-2 gap-4">\n`;
+    html += `<input type="hidden" name="item" value={JSON.stringify(item)} />\n`;
     const attrs = getClassAndParentAttributes(c);
     const assocs = getNavigableAssociationsForClass(c, ma);
     for (const a of attrs) {
-        let div = `   <div class="flex items-center">\n`;
+        let div = ``;
+        if (a.name === "id" || a.name === "active") {
+            div += `   <input type="hidden" name="${a.name}" value={item.${a.name}} />\n`;
+            html += div;
+            continue;
+        }
+        div += `   <div class="flex items-center">\n`;
         div += `      <label for=${a.name} class="w-1/3">${camelCaseToTitleCase(
             a.name
         )}:</label>\n`;
         div += `      <input id=${a.name} type=${ModelTypeToCodeType(
             a.type,
             "html"
-        )} bind:value={${c.name.toLowerCase()}.${
+        )} bind:value={item.${
             a.name
         }} class="w-2/3 rounded border border-gray-300 p-2"/>\n`;
         div += `   </div>\n`;
@@ -525,15 +534,13 @@ const generateHtmlForEdit = (c: Class, ma: Association[] = []): string => {
             )}:</label>\n`;
             div += `      <select\n`;
             div += `         id="${a.target.class.name}"\n`;
-            div += `         bind:value={${c.name.toLowerCase()}.${
-                a.target.class.name
-            }id}\n`;
+            div += `         bind:value={item.${a.target.class.name}id}\n`;
             div += `         class="w-2/3 rounded border border-gray-300 p-2"\n`;
             div += `      >\n`;
-            div += `         {#each ${pluralize(
+            div += `         {#each data.ReferenceData['${pluralize(
                 a.target.class.name.toLowerCase()
-            )} as item}\n`;
-            div += `            <option value={item.id}>{item.typeLongDescription}</option>\n`;
+            )}'] as refitem}\n`;
+            div += `            <option value={refitem.id}>{refitem.typeLongDescription}</option>\n`;
             div += `         {/each}\n`;
             div += `      </select>\n`;
             div += `   </div>\n`;
@@ -546,7 +553,152 @@ const generateHtmlForEdit = (c: Class, ma: Association[] = []): string => {
     div += `   >\n`;
     div += `   <button\n`;
     div += `      type="button"\n`;
-    div += `      on:click={() => goto('/${c.name.toLowerCase()}')}\n`;
+    div += `      onclick={() => goto('/${c.name.toLowerCase()}')}\n`;
+    div += `      class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-700">Cancel</button\n`;
+    div += `   >\n`;
+    div += `</div>\n`;
+    html += div;
+    html += `</form>`;
+    return html;
+};
+/* create/+page.server.ts
+    Build__Page_server_ts_Create_Content generates the server.ts file content for a class in the Create tree
+    @param c: Class
+    @param templateContent: string
+    @returns string
+*/
+export const Build__Page_server_ts_Create_Content = (
+    c: Class,
+    templateContent: string
+): string => {
+    if (c.isAbstract) {
+        return "";
+    }
+
+    // Replace all occurrences of classlowertext
+    const classlowertext = c.name.toLowerCase();
+    templateContent = templateContent.replace(
+        /{{classlowertext}}/g,
+        classlowertext
+    );
+
+    const classuppertext = c.name;
+    templateContent = templateContent.replace(
+        /{{classuppertext}}/g,
+        classuppertext
+    );
+
+    return templateContent;
+};
+export const Build_Page_Svelte_Create_Content = (
+    c: Class,
+    templateContent: string,
+    ma: Association[] = []
+): string => {
+    if (c.isAbstract) {
+        return "";
+    }
+    let assignments = `let item: Partial<${c.name}> = $state({\n`;
+    const attrs = getClassAndParentAttributes(c);
+    const assocs = getNavigableAssociationsForClass(c, ma);
+    for (const a of attrs) {
+        if (a.name === "id") continue;
+        if (a.type === "date") {
+            assignments += `   ${a.name}: '',\n`;
+            continue;
+        }
+        if (a.type === "datetime") {
+            assignments += `   ${a.name}: new Date().toISOString(),\n`;
+            continue;
+        }
+        if (a.type === "bool" && a.name === "active") {
+            assignments += `   ${a.name}: true,\n`;
+            continue;
+        }
+        if (a.type === "bool") {
+            assignments += `   ${a.name}: false,\n`;
+            continue;
+        }
+        if (a.type === "int") {
+            assignments += `   ${a.name}: 0,\n`;
+            continue;
+        }
+        if (a.type === "string") {
+            assignments += `   ${a.name}: '',\n`;
+            continue;
+        }
+    }
+    for (const a of assocs) {
+        if (a.target.multiplicity === "1") {
+            assignments += `   ${a.target.class.name}id: 0,\n`;
+        }
+    }
+    assignments += `});\n`;
+    templateContent = templateContent.replace("{{assignments}}", assignments);
+    let classuppertext = c.name;
+    templateContent = templateContent.replace(
+        /{{classuppertext}}/g,
+        classuppertext
+    );
+
+    const html = generateHtmlForCreate(c, ma);
+    templateContent = templateContent.replace("{{html}}", html);
+    return templateContent;
+};
+const generateHtmlForCreate = (c: Class, ma: Association[] = []): string => {
+    let html = `<h1 class="my-6 text-center text-2xl font-bold">Create ${c.name}</h1>\n`;
+    html += `<form method="POST" action="?/create" class="grid grid-cols-2 gap-4">\n`;
+    html += `   <input type="hidden" name="item" value={JSON.stringify(item)} />\n`;
+    const attrs = getClassAndParentAttributes(c);
+    const assocs = getNavigableAssociationsForClass(c, ma);
+    for (const a of attrs) {
+        let div = ``;
+        if (a.name === "id" || a.name === "active") {
+            continue;
+        }
+        div += `   <div class="flex items-center">\n`;
+        div += `      <label for=${a.name} class="w-1/3">${camelCaseToTitleCase(
+            a.name
+        )}:</label>\n`;
+        div += `      <input id=${a.name} type=${ModelTypeToCodeType(
+            a.type,
+            "html"
+        )} bind:value={item.${
+            a.name
+        }} class="w-2/3 rounded border border-gray-300 p-2"/>\n`;
+        div += `   </div>\n`;
+        html += div;
+    }
+    for (const a of assocs) {
+        if (a.target.multiplicity === "1") {
+            let div = `   <div class="flex items-center">\n`;
+            div += `      <label for="${
+                a.target.class.name
+            }" class="w-1/3">${camelCaseToTitleCase(
+                a.target.class.name
+            )}:</label>\n`;
+            div += `      <select\n`;
+            div += `         id="${a.target.class.name}"\n`;
+            div += `         bind:value={item.${a.target.class.name}id}\n`;
+            div += `         class="w-2/3 rounded border border-gray-300 p-2"\n`;
+            div += `      >\n`;
+            div += `         {#each data.ReferenceData['${pluralize(
+                a.target.class.name.toLowerCase()
+            )}'] as refitem}\n`;
+            div += `            <option value={refitem.id}>{refitem.typeLongDescription}</option>\n`;
+            div += `         {/each}\n`;
+            div += `      </select>\n`;
+            div += `   </div>\n`;
+            html += div;
+        }
+    }
+    let div = `<div class="col-span-2 flex justify-between">\n`;
+    div += `   <button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"\n`;
+    div += `      >Save</button\n`;
+    div += `   >\n`;
+    div += `   <button\n`;
+    div += `      type="button"\n`;
+    div += `      onclick={() => goto('/${c.name.toLowerCase()}')}\n`;
     div += `      class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-700">Cancel</button\n`;
     div += `   >\n`;
     div += `</div>\n`;

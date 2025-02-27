@@ -1,17 +1,6 @@
-import type { {{typeImports}} } from '$lib/types';
-import { {{apiImports}}} from '$lib/api';
+import type { {{classuppertext}} } from '$lib/types';
+import { create{{classuppertext}} } from '$lib/api';
 import { redirect } from '@sveltejs/kit';
-
-export const load = async () => {
-	const [{{responses}}] = await Promise.all([{{promises}}]);
-
-	if ({{statuscheck}}) {
-		{{assignments}}
-		return { {{returns}} };
-	} else {
-		throw new Error('Failed to load data');
-	}
-};
 
 export const actions = {
 	create: async ({ request }) => {
@@ -19,7 +8,7 @@ export const actions = {
 		const item = data.get('item');
 		if (item && typeof item === 'string') {
 			const data: {{classuppertext}} = JSON.parse(item);
-			const response = await create{{classupertext}}(data);
+			const response = await create{{classuppertext}}(data);
 			console.log(response.status);
 			if (response.status === 201) {
 				redirect(303, '/{{classlowertext}}');
