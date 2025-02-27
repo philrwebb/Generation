@@ -17,7 +17,7 @@ export const load = async ({ params }) => {
 export const actions = {
 	save: async ({ request }) => {
 		const data = await request.formData();
-		const person = data.get('item');
+		const {{classlowertext}} = data.get('item');
 		if ({{classlowertext}} && typeof {{classlowertext}} === 'string') {
 			const data = JSON.parse({{classlowertext}});
 			const id: number = data.id;
