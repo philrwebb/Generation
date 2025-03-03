@@ -52,7 +52,7 @@ const doSchemaRefDataAssociations = (
     if (c.parent?.name !== undefined) {
         schemaContent += doSchemaRefDataAssociations(
             c.parent,
-            getRefDataAssociationsForClass(c.parent, model),
+            getRefDataAssociationsForClass(c.parent, model.associations),
             schemaContent
         );
     }
@@ -76,7 +76,7 @@ const doSchemaCollectionAssociations = (
     }
     for (const a of collectionAssociations) {
         schemaContent += `  ${a.source.class.name}id: `;
-        schemaContent += `z.number().int().positive(),\n`;
+        schemaContent += `z.number().int().positive().optional(),\n`;
     }
     return schemaContent;
 };
@@ -138,7 +138,10 @@ routesContentimports += `import { FileRepository} from '../repositories/FileRepo
 let routesContent = `export const setupRoutes = (app: express.Application) => {\n`;
 
 for (const c of model.classes) {
-    const refDataAssociations = getRefDataAssociationsForClass(c, model);
+    const refDataAssociations = getRefDataAssociationsForClass(
+        c,
+        model.associations
+    );
     // find 1 to * (e.g. class with collections)
     const collectionAssociations = getCollectionAssociationsForClass(c, model);
     let filePath;
