@@ -1,16 +1,16 @@
-import fs from 'fs';
-import path from 'path';
-import { Association } from '../../../genmodel';
+import fs from "fs";
+import path from "path";
+import { Association } from "../../../genmodel";
 
 export const writeControllerFile = (
-  className: string,
-  injectVar: string,
-  projectName: string,
-  namespace: string,
-  controllerRoot: string,
-  refDataAssociations: Association[],
+    className: string,
+    injectVar: string,
+    projectName: string,
+    namespace: string,
+    controllerRoot: string,
+    refDataAssociations: Association[]
 ) => {
-  let controllerContent = `using Microsoft.AspNetCore.Mvc;
+    let controllerContent = `using Microsoft.AspNetCore.Mvc;
 using #projectname#.Repositories;
 using model.#namespace#;
 
@@ -59,27 +59,30 @@ public class #className#Controller : ControllerBase
 
 }`;
 
-  const pluralClassName = pluralize(className);
-  controllerContent = controllerContent.replace(/#projectname#/g, projectName);
-  controllerContent = controllerContent.replace(/#className#/g, className);
-  controllerContent = controllerContent.replace(/#injectVar#/g, injectVar);
-  controllerContent = controllerContent.replace(/#namespace#/g, namespace);
-  controllerContent = controllerContent.replace(
-    /#pluralClassName#/g,
-    pluralClassName,
-  );
+    const pluralClassName = pluralize(className);
+    controllerContent = controllerContent.replace(
+        /#projectname#/g,
+        projectName
+    );
+    controllerContent = controllerContent.replace(/#className#/g, className);
+    controllerContent = controllerContent.replace(/#injectVar#/g, injectVar);
+    controllerContent = controllerContent.replace(/#namespace#/g, namespace);
+    controllerContent = controllerContent.replace(
+        /#pluralClassName#/g,
+        pluralClassName
+    );
 
-  fs.writeFileSync(
-    controllerRoot + '/' + className + 'Controller.cs',
-    controllerContent,
-  );
+    fs.writeFileSync(
+        controllerRoot + "/" + className + "Controller.cs",
+        controllerContent
+    );
 };
 
 export const writeExtensions = (
-  projectName: string,
-  extensionsRoot: string,
+    projectName: string,
+    extensionsRoot: string
 ) => {
-  let extensionsContent = `using Serilog;
+    let extensionsContent = `using Serilog;
   using Serilog.Events;
   using Serilog.Sinks.SystemConsole.Themes;
   
@@ -119,11 +122,17 @@ export const writeExtensions = (
       }
   }`;
 
-  extensionsContent = extensionsContent.replace(/#projectName#/g, projectName);
+    extensionsContent = extensionsContent.replace(
+        /#projectName#/g,
+        projectName
+    );
 
-  fs.writeFileSync(extensionsRoot + '/SerilogExtensions.cs', extensionsContent);
+    fs.writeFileSync(
+        extensionsRoot + "/SerilogExtensions.cs",
+        extensionsContent
+    );
 
-  extensionsContent = `using System.Reflection;
+    extensionsContent = `using System.Reflection;
   using #projectName#.Repositories;
   using Microsoft.Extensions.DependencyInjection;
   using Serilog;
@@ -145,37 +154,40 @@ export const writeExtensions = (
       }
   }
   `;
-  extensionsContent = extensionsContent.replace(/#projectName#/g, projectName);
+    extensionsContent = extensionsContent.replace(
+        /#projectName#/g,
+        projectName
+    );
 
-  fs.writeFileSync(
-    extensionsRoot + '/ServiceCollectionExtensions.cs',
-    extensionsContent,
-  );
+    fs.writeFileSync(
+        extensionsRoot + "/ServiceCollectionExtensions.cs",
+        extensionsContent
+    );
 };
 
 export const copyRecursiveSync = (src: string, dest: string) => {
-  if (fs.existsSync(src)) {
-    const stats = fs.statSync(src);
-    const isDirectory = stats.isDirectory();
+    if (fs.existsSync(src)) {
+        const stats = fs.statSync(src);
+        const isDirectory = stats.isDirectory();
 
-    if (isDirectory) {
-      if (!fs.existsSync(dest)) {
-        fs.mkdirSync(dest);
-      }
-      fs.readdirSync(src).forEach((childItemName) => {
-        copyRecursiveSync(
-          path.join(src, childItemName),
-          path.join(dest, childItemName),
-        );
-      });
-    } else {
-      fs.copyFileSync(src, dest);
+        if (isDirectory) {
+            if (!fs.existsSync(dest)) {
+                fs.mkdirSync(dest);
+            }
+            fs.readdirSync(src).forEach((childItemName) => {
+                copyRecursiveSync(
+                    path.join(src, childItemName),
+                    path.join(dest, childItemName)
+                );
+            });
+        } else {
+            fs.copyFileSync(src, dest);
+        }
     }
-  }
 };
 
 export const writeProjectFile = (projectName: string, outputRoot: string) => {
-  const projectFileContent = `
+    const projectFileContent = `
   <Project Sdk="Microsoft.NET.Sdk.Web">
   
     <PropertyGroup>
@@ -186,8 +198,10 @@ export const writeProjectFile = (projectName: string, outputRoot: string) => {
   
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />      
       <PackageReference Include="Serilog" Version="4.1.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
       <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
@@ -197,14 +211,14 @@ export const writeProjectFile = (projectName: string, outputRoot: string) => {
   
   </Project>`;
 
-  fs.writeFileSync(
-    outputRoot + '/' + projectName + '.csproj',
-    projectFileContent,
-  );
+    fs.writeFileSync(
+        outputRoot + "/" + projectName + ".csproj",
+        projectFileContent
+    );
 };
 
 export const writeProgramFile = (projectName: string, outputRoot: string) => {
-  let programFileContent = `using #projectname#.Data;
+    let programFileContent = `using #projectname#.Data;
   using Microsoft.EntityFrameworkCore;
   using System.Reflection;
   using #projectname#.Extensions;
@@ -220,8 +234,9 @@ export const writeProgramFile = (projectName: string, outputRoot: string) => {
   // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
   builder.Services.AddOpenApi();
   
+  var dbPath = Path.Join(builder.Environment.ContentRootPath, "person.db");
   builder.Services.AddDbContext<AppDbContext>(options =>
-  options.UseInMemoryDatabase("HumanResourcesDb"));
+  options.UseSqlite($"Data Source={dbPath}"));
   
   // Register all repository services dynamically using the extension method
   builder.Services.AddRepositories(Assembly.GetExecutingAssembly());
@@ -244,18 +259,18 @@ export const writeProgramFile = (projectName: string, outputRoot: string) => {
   
   app.Run();
   `;
-  programFileContent = programFileContent.replace(
-    /#projectname#/g,
-    projectName,
-  );
-  fs.writeFileSync(outputRoot + '/Program.cs', programFileContent);
+    programFileContent = programFileContent.replace(
+        /#projectname#/g,
+        projectName
+    );
+    fs.writeFileSync(outputRoot + "/Program.cs", programFileContent);
 };
 
 export const writeRepositoryInfrastructureFile = (
-  outputFolder: string,
-  projectName: string,
+    outputFolder: string,
+    projectName: string
 ) => {
-  let IRepositoryInfrastructureContent = `using System;
+    let IRepositoryInfrastructureContent = `using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Threading.Tasks;
@@ -267,16 +282,16 @@ export const writeRepositoryInfrastructureFile = (
   
       }
   }`;
-  IRepositoryInfrastructureContent = IRepositoryInfrastructureContent.replace(
-    /#projectName#/g,
-    projectName,
-  );
-  fs.writeFileSync(
-    outputFolder + '/IRepository.cs',
-    IRepositoryInfrastructureContent,
-  );
+    IRepositoryInfrastructureContent = IRepositoryInfrastructureContent.replace(
+        /#projectName#/g,
+        projectName
+    );
+    fs.writeFileSync(
+        outputFolder + "/IRepository.cs",
+        IRepositoryInfrastructureContent
+    );
 
-  IRepositoryInfrastructureContent = `using System;
+    IRepositoryInfrastructureContent = `using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Threading.Tasks;
@@ -291,52 +306,55 @@ export const writeRepositoryInfrastructureFile = (
           Task<bool> SaveChangesAsync();
   
       }`;
-  IRepositoryInfrastructureContent = IRepositoryInfrastructureContent.replace(
-    /#projectName#/g,
-    projectName,
-  );
-  fs.writeFileSync(
-    outputFolder + '/IRepositoryBase.cs',
-    IRepositoryInfrastructureContent,
-  );
+    IRepositoryInfrastructureContent = IRepositoryInfrastructureContent.replace(
+        /#projectName#/g,
+        projectName
+    );
+    fs.writeFileSync(
+        outputFolder + "/IRepositoryBase.cs",
+        IRepositoryInfrastructureContent
+    );
 };
 
 export const writeIRepositoryFile = (
-  projectName: string,
-  className: string,
-  namespace: string,
-  outputFolder: string,
+    projectName: string,
+    className: string,
+    namespace: string,
+    outputFolder: string
 ) => {
-  let repositoryContent = `using model.#namespace#;
+    let repositoryContent = `using model.#namespace#;
   
   namespace #projectName#.Repositories;
   public interface I#className#Repository : IRepositoryBase<#className#>
   {
   }
   `;
-  if (!fs.existsSync(outputFolder + '/' + namespace)) {
-    fs.mkdirSync(outputFolder + '/' + namespace, { recursive: true });
-  }
-  repositoryContent = repositoryContent.replace(/#className#/g, className);
-  repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
-  repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
+    if (!fs.existsSync(outputFolder + "/" + namespace)) {
+        fs.mkdirSync(outputFolder + "/" + namespace, { recursive: true });
+    }
+    repositoryContent = repositoryContent.replace(/#className#/g, className);
+    repositoryContent = repositoryContent.replace(
+        /#projectName#/g,
+        projectName
+    );
+    repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
 
-  fs.writeFileSync(
-    outputFolder + '/' + namespace + '/I' + className + 'Repository.cs',
-    repositoryContent,
-  );
+    fs.writeFileSync(
+        outputFolder + "/" + namespace + "/I" + className + "Repository.cs",
+        repositoryContent
+    );
 };
 
 export const writeRepositoryFile = (
-  className: string,
-  varName: string,
-  projectName: string,
-  outputFolder: string,
-  namespace: string,
-  refDataAssociations: Association[],
-  collectionAssociations: Association[],
+    className: string,
+    varName: string,
+    projectName: string,
+    outputFolder: string,
+    namespace: string,
+    refDataAssociations: Association[],
+    collectionAssociations: Association[]
 ) => {
-  let repositoryContent = `using model.#namespace#;
+    let repositoryContent = `using model.#namespace#;
 using #projectName#.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -391,45 +409,48 @@ public class #className#Repository : I#className#Repository
 
 }
 `;
-  let includes = '';
-  for (const a of refDataAssociations) {
-    includes += `Include(x => x.${a.target.role}).`;
-  }
-  for (const a of collectionAssociations) {
-    includes += `Include(x => x.${a.target.role}).`;
-  }
+    let includes = "";
+    for (const a of refDataAssociations) {
+        includes += `Include(x => x.${a.target.role}).`;
+    }
+    for (const a of collectionAssociations) {
+        includes += `Include(x => x.${a.target.role}).`;
+    }
 
-  repositoryContent = repositoryContent.replace(/#includes#/, includes);
-  const pluralClassName = pluralize(className);
-  repositoryContent = repositoryContent.replace(/#includes#/, '');
-  repositoryContent = repositoryContent.replace(/#className#/g, className);
-  repositoryContent = repositoryContent.replace(/#projectName#/g, projectName);
-  repositoryContent = repositoryContent.replace(/#varName#/g, varName);
-  repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
-  repositoryContent = repositoryContent.replace(
-    /#pluralClassName#/g,
-    pluralClassName,
-  );
+    repositoryContent = repositoryContent.replace(/#includes#/, includes);
+    const pluralClassName = pluralize(className);
+    repositoryContent = repositoryContent.replace(/#includes#/, "");
+    repositoryContent = repositoryContent.replace(/#className#/g, className);
+    repositoryContent = repositoryContent.replace(
+        /#projectName#/g,
+        projectName
+    );
+    repositoryContent = repositoryContent.replace(/#varName#/g, varName);
+    repositoryContent = repositoryContent.replace(/#namespace#/g, namespace);
+    repositoryContent = repositoryContent.replace(
+        /#pluralClassName#/g,
+        pluralClassName
+    );
 
-  if (!fs.existsSync(outputFolder + '/' + namespace)) {
-    fs.mkdirSync(outputFolder + '/' + namespace, { recursive: true });
-  }
+    if (!fs.existsSync(outputFolder + "/" + namespace)) {
+        fs.mkdirSync(outputFolder + "/" + namespace, { recursive: true });
+    }
 
-  fs.writeFileSync(
-    outputFolder + '/' + namespace + '/' + className + 'Repository.cs',
-    repositoryContent,
-  );
+    fs.writeFileSync(
+        outputFolder + "/" + namespace + "/" + className + "Repository.cs",
+        repositoryContent
+    );
 };
 
 export const writeDbContextFile = (
-  projectName: string,
-  usings: Set<string>,
-  dbSets: string,
-  modelBuilderConfig: string,
-  dataRoot: string,
+    projectName: string,
+    usings: Set<string>,
+    dbSets: string,
+    modelBuilderConfig: string,
+    dataRoot: string
 ) => {
-  // Template for AppDbContext.cs
-  let appDbContextTemplate = `
+    // Template for AppDbContext.cs
+    let appDbContextTemplate = `
 using Microsoft.EntityFrameworkCore;
 using model.persistance;
 //start usings
@@ -457,101 +478,101 @@ public class AppDbContext : DbContext
     }
 }
 `;
-  appDbContextTemplate = appDbContextTemplate.replace(
-    /\/\/start usings[\s\S]*?\/\/end usings/,
-    `//start usings\n${Array.from(usings).join('\n')}\n//end usings`,
-  );
+    appDbContextTemplate = appDbContextTemplate.replace(
+        /\/\/start usings[\s\S]*?\/\/end usings/,
+        `//start usings\n${Array.from(usings).join("\n")}\n//end usings`
+    );
 
-  appDbContextTemplate = appDbContextTemplate.replace(
-    /\/\/start dbsets[\s\S]*?\/\/end dbsets/,
-    `//start dbsets\n${dbSets}    //end dbsets`,
-  );
+    appDbContextTemplate = appDbContextTemplate.replace(
+        /\/\/start dbsets[\s\S]*?\/\/end dbsets/,
+        `//start dbsets\n${dbSets}    //end dbsets`
+    );
 
-  modelBuilderConfig = modelBuilderConfig.replace(/\n$/, ';\n');
-  appDbContextTemplate = appDbContextTemplate.replace(
-    /\/\/start modelbuilder[\s\S]*?\/\/end modelbuilder/,
-    `//start modelbuilder\n${modelBuilderConfig}            //end modelbuilder`,
-  );
+    modelBuilderConfig = modelBuilderConfig.replace(/\n$/, ";\n");
+    appDbContextTemplate = appDbContextTemplate.replace(
+        /\/\/start modelbuilder[\s\S]*?\/\/end modelbuilder/,
+        `//start modelbuilder\n${modelBuilderConfig}            //end modelbuilder`
+    );
 
-  appDbContextTemplate = appDbContextTemplate.replace(
-    /#projectName#/g,
-    projectName,
-  );
+    appDbContextTemplate = appDbContextTemplate.replace(
+        /#projectName#/g,
+        projectName
+    );
 
-  // Write the generated content to AppDbContext.cs
-  fs.writeFileSync(dataRoot + '/AppDbContext.cs', appDbContextTemplate);
+    // Write the generated content to AppDbContext.cs
+    fs.writeFileSync(dataRoot + "/AppDbContext.cs", appDbContextTemplate);
 };
 
 export const setUpFolders = (
-  outputRoot: string,
-  controllerRoot: string,
-  modelRoot: string,
-  repositoryRoot: string,
-  extensionsRoot: string,
-  dataRoot: string,
-  genClassPath: string,
+    outputRoot: string,
+    controllerRoot: string,
+    modelRoot: string,
+    repositoryRoot: string,
+    extensionsRoot: string,
+    dataRoot: string,
+    genClassPath: string
 ) => {
-  if (!fs.existsSync(outputRoot)) {
-    fs.mkdirSync(outputRoot, { recursive: true });
-  }
-  if (!fs.existsSync(controllerRoot)) {
-    fs.mkdirSync(controllerRoot, { recursive: true });
-  }
-  if (!fs.existsSync(modelRoot)) {
-    fs.mkdirSync(modelRoot, { recursive: true });
-  }
-  if (!fs.existsSync(repositoryRoot)) {
-    fs.mkdirSync(repositoryRoot, { recursive: true });
-  }
-  if (!fs.existsSync(extensionsRoot)) {
-    fs.mkdirSync(extensionsRoot, { recursive: true });
-  }
-  if (!fs.existsSync(dataRoot)) {
-    fs.mkdirSync(dataRoot, { recursive: true });
-  }
-  //copy all files and folder in .genClassPath to modelRoot overwriting existing files
-  copyRecursiveSync(genClassPath, modelRoot);
+    if (!fs.existsSync(outputRoot)) {
+        fs.mkdirSync(outputRoot, { recursive: true });
+    }
+    if (!fs.existsSync(controllerRoot)) {
+        fs.mkdirSync(controllerRoot, { recursive: true });
+    }
+    if (!fs.existsSync(modelRoot)) {
+        fs.mkdirSync(modelRoot, { recursive: true });
+    }
+    if (!fs.existsSync(repositoryRoot)) {
+        fs.mkdirSync(repositoryRoot, { recursive: true });
+    }
+    if (!fs.existsSync(extensionsRoot)) {
+        fs.mkdirSync(extensionsRoot, { recursive: true });
+    }
+    if (!fs.existsSync(dataRoot)) {
+        fs.mkdirSync(dataRoot, { recursive: true });
+    }
+    //copy all files and folder in .genClassPath to modelRoot overwriting existing files
+    copyRecursiveSync(genClassPath, modelRoot);
 };
 
 export const toLowerCamelCase = (str: string): string => {
-  if (!str) return str;
-  return str.charAt(0).toLowerCase() + str.slice(1);
+    if (!str) return str;
+    return str.charAt(0).toLowerCase() + str.slice(1);
 };
 
 export const pluralize = (word: string): string => {
-  const irregulars: { [key: string]: string } = {
-    man: 'men',
-    woman: 'women',
-    child: 'children',
-    tooth: 'teeth',
-    foot: 'feet',
-    mouse: 'mice',
-    goose: 'geese',
-    party: 'Parties',
-    // Add more irregular nouns as needed
-  };
+    const irregulars: { [key: string]: string } = {
+        man: "men",
+        woman: "women",
+        child: "children",
+        tooth: "teeth",
+        foot: "feet",
+        mouse: "mice",
+        goose: "geese",
+        party: "Parties",
+        // Add more irregular nouns as needed
+    };
 
-  if (irregulars[word.toLowerCase()]) {
-    return irregulars[word.toLowerCase()];
-  }
+    if (irregulars[word.toLowerCase()]) {
+        return irregulars[word.toLowerCase()];
+    }
 
-  const pluralRules: { [key: string]: RegExp } = {
-    es: /[sxz]$|[^aeiou]h$/,
-    ies: /[^aeiou]y$/,
-    ves: /(?:f|fe)$/,
-  };
+    const pluralRules: { [key: string]: RegExp } = {
+        es: /[sxz]$|[^aeiou]h$/,
+        ies: /[^aeiou]y$/,
+        ves: /(?:f|fe)$/,
+    };
 
-  if (pluralRules.es.test(word)) {
-    return word + 'es';
-  }
+    if (pluralRules.es.test(word)) {
+        return word + "es";
+    }
 
-  if (pluralRules.ies.test(word)) {
-    return word.slice(0, -1) + 'ies';
-  }
+    if (pluralRules.ies.test(word)) {
+        return word.slice(0, -1) + "ies";
+    }
 
-  if (pluralRules.ves.test(word)) {
-    return word.replace(/(?:f|fe)$/, 'ves');
-  }
+    if (pluralRules.ves.test(word)) {
+        return word.replace(/(?:f|fe)$/, "ves");
+    }
 
-  return word + 's';
+    return word + "s";
 };

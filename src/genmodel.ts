@@ -29,7 +29,7 @@ export type Endpoint = {
     role?: string;
     fkWinner?: boolean;
     class: Class;
-    navagability: boolean;
+    navigability: boolean;
 };
 
 export enum Visibility {
@@ -224,7 +224,7 @@ export const getNavigableAssociationsForClass = (
 ): Association[] => {
     // Get associations where the source is the class and navigability is true
     let associations = allAssociations.filter(
-        (a) => a.source.class.name === c.name && a.target.navagability
+        (a) => a.source.class.name === c.name && a.target.navigability
     );
     // Recursively include associations from parent's chain if parent exists and is non-empty
     if (c.parent && Object.keys(c.parent).length > 0) {

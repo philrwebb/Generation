@@ -43,8 +43,12 @@ const readAttributeLines = (index: number, lines: string[]): string[] => {
     return attributeLines;
 };
 
-const loadClassAttributes = (theclass: Class, attributeLines: string[]): Class => {
-    const attributePattern = /^(?<visibility>[+\-#])(?<type>[a-zA-Z]+)(?::(?<length>\d+)(?:,(?<precision>\d+))?)?\s+(?<name>[a-zA-Z0-9_]+)$/;
+const loadClassAttributes = (
+    theclass: Class,
+    attributeLines: string[]
+): Class => {
+    const attributePattern =
+        /^(?<visibility>[+\-#])(?<type>[a-zA-Z]+)(?::(?<length>\d+)(?:,(?<precision>\d+))?)?\s+(?<name>[a-zA-Z0-9_]+)$/;
     attributeLines.forEach((attributeLine: string) => {
         attributeLine = attributeLine.replace(/^[^a-zA-Z0-9\+\-]+/, "");
         const match = attributeLine.match(attributePattern);
@@ -56,13 +60,14 @@ const loadClassAttributes = (theclass: Class, attributeLines: string[]): Class =
                 type: type,
                 length: length ? parseInt(length) : 0,
                 precision: precision ? parseInt(precision) : 0,
-                visibility: visibility === "+"
-                    ? Visibility.Public
-                    : visibility === "-"
-                    ? Visibility.Private
-                    : visibility === "#"
-                    ? Visibility.Protected
-                    : Visibility.Public,
+                visibility:
+                    visibility === "+"
+                        ? Visibility.Public
+                        : visibility === "-"
+                        ? Visibility.Private
+                        : visibility === "#"
+                        ? Visibility.Protected
+                        : Visibility.Public,
             };
             theclass.attributes.push(attribute);
         }
@@ -88,8 +93,20 @@ const processInheritanceLine = (line: string, classes: Class[]) => {
     classToUpdate.parent = classToAssignAsParent;
 };
 
-const processOneWayAssociationLine = (line: string, classes: Class[]): Association => {
-    const [source, sourceMultiplicity, , targetMultiplicity, target, targetRole = ""] = line.split(" ");
+const processOneWayAssociationLine = (
+    line: string,
+    classes: Class[]
+): Association => {
+    console.log("Processing one-way association line:", line);
+    const [
+        source,
+        sourceMultiplicity,
+        ,
+        targetMultiplicity,
+        target,
+        ,
+        targetRole = "",
+    ] = line.split(" ");
     const sourceClass: Class = FindClass(source, classes);
     const targetClass: Class = FindClass(target, classes);
 
@@ -99,13 +116,13 @@ const processOneWayAssociationLine = (line: string, classes: Class[]): Associati
             multiplicity: sourceMultiplicity.replace(/"/g, ""),
             role: "",
             class: sourceClass,
-            navagability: false,
+            navigability: false,
         } as Endpoint,
         target: {
             multiplicity: targetMultiplicity.replace(/"/g, ""),
             role: targetRole,
             class: targetClass,
-            navagability: true,
+            navigability: true,
         } as Endpoint,
     };
 };
@@ -143,17 +160,28 @@ const processAllLines = (lines: string[]): Model => {
 };
 
 const processFile = (filePath: string, readFile: Function): Model => {
-    const lines = readFile(filePath).filter((line: string) => line.trim().length > 0);
+    const lines = readFile(filePath).filter(
+        (line: string) => line.trim().length > 0
+    );
     return processAllLines(lines);
 };
 
-export const genModel = (filePath: string, genModelPath: string, readFile: Function, writeTheFile: Function) => {
+export const genModel = (
+    filePath: string,
+    genModelPath: string,
+    readFile: Function,
+    writeTheFile: Function
+) => {
     const model = processFile(filePath, readFile);
     console.log(model, filePath, writeTheFile, readFile, readFileLines);
     writeTheFile(model, genModelPath);
 };
 
-const testModel = (genModelPath: string, readFile = deserializeJsonToClasses, print = printModel) => {
+const testModel = (
+    genModelPath: string,
+    readFile = deserializeJsonToClasses,
+    print = printModel
+) => {
     const model = readFile(genModelPath);
     print(model);
 };
@@ -161,7 +189,9 @@ const testModel = (genModelPath: string, readFile = deserializeJsonToClasses, pr
 const main = () => {
     const args: string[] = process.argv.slice(2);
     if (args.length !== 2) {
-        console.log("Usage: ts-node src/jsonModelGenerator.ts <inputfile> <outputfile>");
+        console.log(
+            "Usage: ts-node src/jsonModelGenerator.ts <inputfile> <outputfile>"
+        );
         return;
     }
     const [filePath, genModelPath] = args;
