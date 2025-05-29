@@ -9,3 +9,6 @@ src/codegeneration/csharp/model/
 .mypy_cache/
 *.js
 tempqueries.txt
+.DS_Store
+person.db
+person.session.sql 

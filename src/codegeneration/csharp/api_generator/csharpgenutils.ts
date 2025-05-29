@@ -207,6 +207,7 @@ export const writeProjectFile = (projectName: string, outputRoot: string) => {
       <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
       <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.2" />
     </ItemGroup>
   
   </Project>`;
@@ -219,45 +220,45 @@ export const writeProjectFile = (projectName: string, outputRoot: string) => {
 
 export const writeProgramFile = (projectName: string, outputRoot: string) => {
     let programFileContent = `using #projectname#.Data;
-  using Microsoft.EntityFrameworkCore;
-  using System.Reflection;
-  using #projectname#.Extensions;
-  using Serilog;
-  
-  var builder = WebApplication.CreateBuilder(args);
-  
-  SerilogExtensions.ConfigureSerilog();
-  builder.Host.UseSerilog();
-  
-  // Add services to the container.
-  builder.Services.AddControllers();
-  // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-  builder.Services.AddOpenApi();
-  
-  var dbPath = Path.Join(builder.Environment.ContentRootPath, "person.db");
-  builder.Services.AddDbContext<AppDbContext>(options =>
-  options.UseSqlite($"Data Source={dbPath}"));
-  
-  // Register all repository services dynamically using the extension method
-  builder.Services.AddRepositories(Assembly.GetExecutingAssembly());
-  
-  var app = builder.Build();
-  
-  // Configure the HTTP request pipeline.
-  if (app.Environment.IsDevelopment())
-  {
-      app.MapOpenApi(
-  
-      );
-  }
-  
-  app.UseHttpsRedirection();
-  
-  app.UseAuthorization();
-  
-  app.MapControllers();
-  
-  app.Run();
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using PersonApi.Extensions;
+using Serilog;
+
+var builder = WebApplication.CreateBuilder(args);
+
+SerilogExtensions.ConfigureSerilog();
+builder.Host.UseSerilog();
+
+// Add services to the container.
+builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi("PersonAPI");
+
+var dbPath = Path.Join(builder.Environment.ContentRootPath, "person.db");
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlite($"Data Source={dbPath}"));
+
+// Register all repository services dynamically using the extension method
+builder.Services.AddRepositories(Assembly.GetExecutingAssembly());
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(Options => Options.SwaggerEndpoint("/openapi/PersonAPI.json", "PersonAPI"));
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
   `;
     programFileContent = programFileContent.replace(
         /#projectname#/g,

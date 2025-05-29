@@ -98,30 +98,49 @@ const processOneWayAssociationLine = (
     classes: Class[]
 ): Association => {
     console.log("Processing one-way association line:", line);
-    const [
-        source,
+
+    const associationPattern =
+        /^(?<sourceClass>\w+)\s+"(?<sourceMultiplicity>[*\d..]+)"\s+-->\s+"(?<targetMultiplicity>[*\d..]+)"\s+(?<targetClass>\w+)\s*:\s*(?<targetRole>\w*)$/;
+    const match = line.match(associationPattern);
+
+    if (!match || !match.groups) {
+        throw new Error(`Could not parse association line: ${line}`);
+    }
+
+    const {
+        sourceClass: sourceName,
         sourceMultiplicity,
-        ,
         targetMultiplicity,
-        target,
-        ,
-        targetRole = "",
-    ] = line.split(" ");
-    const sourceClass: Class = FindClass(source, classes);
-    const targetClass: Class = FindClass(target, classes);
+        targetClass: targetName,
+        targetRole,
+    } = match.groups;
+
+    const sourceClassObj: Class = FindClass(sourceName, classes);
+    const targetClassObj: Class = FindClass(targetName, classes);
+
+    if (!sourceClassObj) {
+        throw new Error(
+            `Source class "${sourceName}" not found for association: ${line}`
+        );
+    }
+    if (!targetClassObj) {
+        throw new Error(
+            `Target class "${targetName}" not found for association: ${line}`
+        );
+    }
 
     return {
-        name: `Association_${source}_${target}`,
+        name: `Association_${sourceName}_${targetName}`,
         source: {
             multiplicity: sourceMultiplicity.replace(/"/g, ""),
-            role: "",
-            class: sourceClass,
-            navigability: false,
+            role: "", // Source role is not explicitly defined in this format
+            class: sourceClassObj,
+            navigability: false, // Assuming one-way, source is not navigable by default from target via this role
         } as Endpoint,
         target: {
             multiplicity: targetMultiplicity.replace(/"/g, ""),
-            role: targetRole,
-            class: targetClass,
+            role: targetRole || "", // Ensure role is an empty string if not present
+            class: targetClassObj,
             navigability: true,
         } as Endpoint,
     };
