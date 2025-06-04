@@ -99,11 +99,15 @@ const processOneWayAssociationLine = (
 ): Association => {
     console.log("Processing one-way association line:", line);
 
+    // Regex to capture source, multiplicities, target, and an optional target role
     const associationPattern =
-        /^(?<sourceClass>\w+)\s+"(?<sourceMultiplicity>[*\d..]+)"\s+-->\s+"(?<targetMultiplicity>[*\d..]+)"\s+(?<targetClass>\w+)\s*:\s*(?<targetRole>\w*)$/;
+        /^\s*(?<sourceClass>\w+)\s*"(?<sourceMultiplicity>[*\d..]+)"\s*-->\s*"(?<targetMultiplicity>[*\d..]+)"\s*(?<targetClass>\w+)\s*(?::\s*(?<targetRole>\w+))?\s*$/;
     const match = line.match(associationPattern);
 
     if (!match || !match.groups) {
+        console.error(`Could not parse association line: ${line}`);
+        // Consider returning null or a specific error object to allow graceful handling
+        // For now, throwing error as per existing style in the file.
         throw new Error(`Could not parse association line: ${line}`);
     }
 
@@ -112,34 +116,46 @@ const processOneWayAssociationLine = (
         sourceMultiplicity,
         targetMultiplicity,
         targetClass: targetName,
-        targetRole,
+        targetRole: rawTargetRole, // Captured role, might be undefined
     } = match.groups;
 
-    const sourceClassObj: Class = FindClass(sourceName, classes);
-    const targetClassObj: Class = FindClass(targetName, classes);
+    const sourceClassObj: Class = FindClass(sourceName, classes); // Corrected order
+    const targetClassObj: Class = FindClass(targetName, classes); // Corrected order
 
     if (!sourceClassObj) {
+        console.error(
+            `Source class "${sourceName}" not found for association: ${line}`
+        );
         throw new Error(
             `Source class "${sourceName}" not found for association: ${line}`
         );
     }
     if (!targetClassObj) {
+        console.error(
+            `Target class "${targetName}" not found for association: ${line}`
+        );
         throw new Error(
             `Target class "${targetName}" not found for association: ${line}`
         );
     }
 
+    // Default targetRole if not provided or if it's an empty string after the colon
+    const targetRole =
+        rawTargetRole && rawTargetRole.trim() !== ""
+            ? rawTargetRole.trim()
+            : targetName.toLowerCase();
+
     return {
         name: `Association_${sourceName}_${targetName}`,
         source: {
             multiplicity: sourceMultiplicity.replace(/"/g, ""),
-            role: "", // Source role is not explicitly defined in this format
+            role: "", // Source role is not explicitly defined in this Mermaid format
             class: sourceClassObj,
-            navigability: false, // Assuming one-way, source is not navigable by default from target via this role
+            navigability: false,
         } as Endpoint,
         target: {
             multiplicity: targetMultiplicity.replace(/"/g, ""),
-            role: targetRole || "", // Ensure role is an empty string if not present
+            role: targetRole,
             class: targetClassObj,
             navigability: true,
         } as Endpoint,
