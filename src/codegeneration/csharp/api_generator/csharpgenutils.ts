@@ -442,6 +442,37 @@ public class #className#Repository : I#className#Repository
         repositoryContent
     );
 };
+export const copyLaunchSettings = (launchSettingsFolder: string) => {
+    if (launchSettingsFolder) {
+        const templateFileName = "launchSettings.json"; // Name of your template file
+        const destinationFileName = "launchSettings.json"; // Name of the destination file
+
+        const sourceTemplatePath = path.join(
+            __dirname,
+            "templates",
+            templateFileName
+        );
+        const destinationPath = path.join(
+            launchSettingsFolder,
+            destinationFileName
+        );
+
+        try {
+            if (fs.existsSync(sourceTemplatePath)) {
+                fs.copyFileSync(sourceTemplatePath, destinationPath);
+                console.log(`Copied ${templateFileName} to ${destinationPath}`);
+            } else {
+                console.error(`Template file not found: ${sourceTemplatePath}`);
+            }
+        } catch (error) {
+            console.error(`Error copying ${templateFileName}:`, error);
+        }
+    } else {
+        console.warn(
+            "config.launchSettingsFolder is not defined. Skipping launchSettings.json copy."
+        );
+    }
+};
 
 export const writeDbContextFile = (
     projectName: string,
@@ -511,7 +542,8 @@ export const setUpFolders = (
     repositoryRoot: string,
     extensionsRoot: string,
     dataRoot: string,
-    genClassPath: string
+    genClassPath: string,
+    launchSettingsFolder: string
 ) => {
     if (!fs.existsSync(outputRoot)) {
         fs.mkdirSync(outputRoot, { recursive: true });
@@ -530,6 +562,9 @@ export const setUpFolders = (
     }
     if (!fs.existsSync(dataRoot)) {
         fs.mkdirSync(dataRoot, { recursive: true });
+    }
+    if (!fs.existsSync(launchSettingsFolder)) {
+        fs.mkdirSync(launchSettingsFolder, { recursive: true });
     }
     //copy all files and folder in .genClassPath to modelRoot overwriting existing files
     copyRecursiveSync(genClassPath, modelRoot);

@@ -29,14 +29,14 @@ describe("getNavigableAssociationsForClass", () => {
             multiplicity: "1",
             role: "",
             class: parent,
-            navagability: true,
+            navigability: true,
         };
 
         const childEndpoint: Endpoint = {
             multiplicity: "1",
             role: "",
             class: child,
-            navagability: true,
+            navigability: true,
         };
 
         // A non-navigable endpoint (should be filtered out)
@@ -44,7 +44,7 @@ describe("getNavigableAssociationsForClass", () => {
             multiplicity: "1",
             role: "",
             class: parent,
-            navagability: false,
+            navigability: false,
         };
 
         // Define associations:
@@ -85,5 +85,60 @@ describe("getNavigableAssociationsForClass", () => {
         expect(results).toEqual(
             expect.arrayContaining([assocFromParent, assocFromChild])
         );
+    });
+
+    it("returns a navigable association when the source endpoint has a role and is navigable", () => {
+        const classA: Class = {
+            name: "ClassA",
+            attributes: [],
+            isAbstract: false,
+        };
+        const classB: Class = {
+            name: "ClassB",
+            attributes: [],
+            isAbstract: false,
+        };
+
+        const navigableEndpointWithRole: Endpoint = {
+            multiplicity: "1",
+            role: "roleForA", // Non-empty role
+            class: classA,
+            navigability: true,
+        };
+
+        const targetEndpoint: Endpoint = {
+            multiplicity: "*",
+            role: "roleForB",
+            class: classB,
+            navigability: true,
+        };
+
+        const associationWithRole: Association = {
+            name: "assocWithRole",
+            source: navigableEndpointWithRole,
+            target: targetEndpoint,
+        };
+
+        // Another association where ClassA is the target, to ensure it's not picked up
+        const associationWhereAisTarget: Association = {
+            name: "assocWhereAisTarget",
+            source: targetEndpoint, // ClassB is source
+            target: navigableEndpointWithRole, // ClassA is target
+        };
+
+        const model: Model = {
+            modeldate: new Date(),
+            classes: [classA, classB],
+            associations: [associationWithRole, associationWhereAisTarget],
+        };
+
+        const results = getNavigableAssociationsForClass(
+            classA,
+            model.associations
+        );
+
+        expect(results).toHaveLength(1);
+        expect(results).toContain(associationWithRole);
+        expect(results).not.toContain(associationWhereAisTarget);
     });
 });
