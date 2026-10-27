@@ -1,12 +1,12 @@
 classDiagram
-note for PersistableBase "inheritance=propagateattributes,namespace=persistance"
+note for PersistableBase "inheritance=propagateattributes,namespace=persistence"
 class PersistableBase {
     +int id
     +bool active
 }
 &lt;&lt;Abstract&gt;&gt; PersistableBase
 
-note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistance"
+note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistence"
 class TimeLimitedPersistableBase {
     +datetime effFrom
     +datetime effTo
@@ -14,7 +14,7 @@ class TimeLimitedPersistableBase {
 &lt;&lt;Abstract&gt;&gt; TimeLimitedPersistableBase
 TimeLimitedPersistableBase --|> PersistableBase
 
-note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
+note for ReferenceBase "inheritance=propagateattributes,namespace=persistence"
 class ReferenceBase {
     +string:50 typeShortDescription
     +string:150 typeLongDescription

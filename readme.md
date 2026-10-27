@@ -71,7 +71,7 @@ As is - you should be able to run npx tsc to build the js (into a dist folder). 
 
 Consider how to generate code artefacts from a model representing the data domain of an application. Code artefacts that you might generate include:
 
-- Database persistance code (for sqlite | sqlserver | oracle | postgres . . .),
+- Database persistence code (for sqlite | sqlserver | oracle | postgres . . .),
 - Back-end persistence code (for dotnet | nodejs | php . . .),
 - Back-end api (for dotnet | nodejs | php . . .)
 - Front-end services to consume the api (for angular | svelte | react | vue . . .)
@@ -224,14 +224,14 @@ Following is the Mermaid 'code' that describes a Person Model which will be used
 Person Model
 ---
 classDiagram
-    note for PersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for PersistableBase "inheritance=propagateattributes,namespace=persistence"
     class PersistableBase {
         +int id
         +bool active
     }
     <<Abstract>> PersistableBase
 
-    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistence"
     class TimeLimitedPersistableBase {
         +datetime effFrom
         +datetime effTo
@@ -239,7 +239,7 @@ classDiagram
     <<Abstract>> TimeLimitedPersistableBase
     PersistableBase <|-- TimeLimitedPersistableBase
 
-    note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
+    note for ReferenceBase "inheritance=propagateattributes,namespace=persistence"
     class ReferenceBase {
         +string:50 typeShortDescription
         +string:150 typeLongDescription
@@ -308,14 +308,14 @@ The Person model described above renders like this:
 Person Model
 ---
 classDiagram
-    note for PersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for PersistableBase "inheritance=propagateattributes,namespace=persistence"
     class PersistableBase {
         +int id
         +bool active
     }
     <<Abstract>> PersistableBase
 
-    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistence"
     class TimeLimitedPersistableBase {
         +datetime effFrom
         +datetime effTo
@@ -323,7 +323,7 @@ classDiagram
     <<Abstract>> TimeLimitedPersistableBase
     PersistableBase <|-- TimeLimitedPersistableBase
 
-    note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
+    note for ReferenceBase "inheritance=propagateattributes,namespace=persistence"
     class ReferenceBase {
         +string:50 typeShortDescription
         +string:150 typeLongDescription
@@ -413,7 +413,7 @@ You can late-bind on the language/framework to use and easily change between fra
     {
       "name": "PersistableBase",
       "inheritance": "propagateattributes",
-      "namespace": "persistance",
+      "namespace": "persistence",
       "parent": "",
       "attributes": [
         {
@@ -436,7 +436,7 @@ You can late-bind on the language/framework to use and easily change between fra
     {
       "name": "TimeLimitedPersistableBase",
       "inheritance": "propagateattributes",
-      "namespace": "persistance",
+      "namespace": "persistence",
       "parent": "PersistableBase",
       "attributes": [
         {
@@ -459,7 +459,7 @@ You can late-bind on the language/framework to use and easily change between fra
     {
       "name": "ReferenceBase",
       "inheritance": "propagateattributes",
-      "namespace": "persistance",
+      "namespace": "persistence",
       "parent": "TimeLimitedPersistableBase",
       "attributes": [
         {

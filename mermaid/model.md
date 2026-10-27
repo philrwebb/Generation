@@ -3,14 +3,14 @@
 Person Model
 ---
 classDiagram
-    note for PersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for PersistableBase "inheritance=propagateattributes,namespace=persistence"
     class PersistableBase {
         +int id
         +bool active
     }
     <<Abstract>> PersistableBase
 
-    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistance"
+    note for TimeLimitedPersistableBase "inheritance=propagateattributes,namespace=persistence"
     class TimeLimitedPersistableBase {
         +datetime effFrom
         +datetime effTo
@@ -18,7 +18,7 @@ classDiagram
     <<Abstract>> TimeLimitedPersistableBase
     TimeLimitedPersistableBase --|> PersistableBase
 
-    note for ReferenceBase "inheritance=propagateattributes,namespace=persistance"
+    note for ReferenceBase "inheritance=propagateattributes,namespace=persistence"
     class ReferenceBase {
         +string:50 typeShortDescription
         +string:150 typeLongDescription

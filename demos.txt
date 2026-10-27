@@ -1,0 +1,2 @@
+/Volumes/ExternalAPFS/Development/sveltekit/GenApiConsumer Svelte consumer of typescript API
+/Volumes/ExternalAPFS/Development/Typescript/ExpressJSWithTypescript Typescript ExpressJS API

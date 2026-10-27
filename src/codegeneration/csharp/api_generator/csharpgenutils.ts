@@ -54,6 +54,7 @@ public class #className#Controller : ControllerBase
     public async Task<IActionResult> Update#className#([FromBody] #className# #injectVar#)
     {
         var updated#className# = await _#injectVar#Repository.Update(#injectVar#);
+        await _#injectVar#Repository.SaveChangesAsync();
         return Ok(updated#className#);
     }
 
@@ -484,7 +485,7 @@ export const writeDbContextFile = (
     // Template for AppDbContext.cs
     let appDbContextTemplate = `
 using Microsoft.EntityFrameworkCore;
-using model.persistance;
+using model.persistence;
 //start usings
 
 //end usings

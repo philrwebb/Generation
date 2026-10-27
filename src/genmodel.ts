@@ -85,7 +85,7 @@ export const printModel = (model: Model) => {
 
 export const GetParentColumns = (
     inClass: Class,
-    Attributes: Attribute[] = []
+    Attributes: Attribute[] = [],
 ): Attribute[] => {
     if (inClass.parent) {
         Attributes = GetParentColumns(inClass.parent, Attributes);
@@ -101,7 +101,7 @@ export const FindClass = (className: string, classes: Class[]): Class => {
 export const WriteFile = (
     folderPath: string,
     fileName: string,
-    content: string
+    content: string,
 ) => {
     const filePath = path.join(folderPath, fileName);
     fs.writeFileSync(filePath, content, "utf8");
@@ -109,7 +109,7 @@ export const WriteFile = (
 
 export const ModelTypeToCodeType = (
     modeltype: string,
-    codeLanguage: string
+    codeLanguage: string,
 ): string => {
     if (modeltype === "string") {
         if (codeLanguage === "python") return "str";
@@ -190,13 +190,13 @@ export const pluralize = (word: string): string => {
 
 export const getCollectionAssociationsForClass = (
     c: Class,
-    model: Model
+    model: Model,
 ): Association[] => {
     return model.associations.filter(
         (a) =>
             (a.source.multiplicity === "0" || a.source.multiplicity === "1") &&
             a.target.multiplicity === "*" &&
-            a.target.class.name === c.name // this class is the parent
+            a.target.class.name === c.name, // this class is the parent
     );
 };
 
@@ -209,7 +209,7 @@ export const camelCaseToTitleCase = (str: string): string => {
 
 export const getClassAndParentAttributes = (
     c: Class,
-    a: Attribute[] = []
+    a: Attribute[] = [],
 ): Attribute[] => {
     // if (a.length === 0) console.log(c.name);
     if (c.parent && Object.keys(c.parent).length > 0) {
@@ -220,11 +220,11 @@ export const getClassAndParentAttributes = (
 
 export const getNavigableAssociationsForClass = (
     c: Class,
-    allAssociations: Association[]
+    allAssociations: Association[],
 ): Association[] => {
     // Get associations where the source is the class and navigability is true
     let associations = allAssociations.filter(
-        (a) => a.source.class.name === c.name && a.target.navigability
+        (a) => a.source.class.name === c.name && a.target.navigability,
     );
     // Recursively include associations from parent's chain if parent exists and is non-empty
     if (c.parent && Object.keys(c.parent).length > 0) {
@@ -238,13 +238,13 @@ export const getNavigableAssociationsForClass = (
 
 export const getRefDataAssociationsForClass = (
     c: Class,
-    associations: Association[]
+    associations: Association[],
 ): Association[] => {
     return associations.filter(
         (a) =>
             a.source.multiplicity === "*" &&
             a.target.multiplicity === "1" &&
-            a.source.class.name === c.name // this class is the parent
+            a.source.class.name === c.name, // this class is the parent
     );
 };
 

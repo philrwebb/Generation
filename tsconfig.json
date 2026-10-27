@@ -1,19 +1,21 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2018",
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": [
-    "node_modules", // Commonly excluded to avoid compiling external modules
-    "dist", // Exclude compiled output directory if applicable,
-    "output"
-  ]
+    "compilerOptions": {
+        "module": "node16",
+        "target": "ES2018",
+        "moduleResolution": "node16",
+        "isolatedModules": true,
+        "types": ["node", "jest"],
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": [
+        "node_modules", // Commonly excluded to avoid compiling external modules
+        "dist", // Exclude compiled output directory if applicable,
+        "output"
+    ]
 }

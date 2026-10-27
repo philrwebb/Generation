@@ -1,193 +1,132 @@
-import {
-  Class,
-  Attribute,
-  Association,
-  deserializeJsonToClasses,
-  ModelTypeToCodeType,
-} from '../../../genmodel';
-import * as fs from 'fs';
+import fs from "node:fs";
+import path from "node:path";
+import type { ModelAssociation, ModelAttribute, ModelClass, ModelType } from "../../../model/canonical-model";
+import { loadModel } from "../../../model/load-model";
+import { getAssociationTargetClass, getCollectionAssociations, getParent, getReferenceAssociations } from "../../../model/queries";
+import type { ResolvedModel } from "../../../model/resolve-model";
 
-const genModelPath = './output/genModel.json';
-const outputRoot = './output/typescript/model';
-console.log('Current directory:', process.cwd());
-const model = deserializeJsonToClasses(genModelPath);
-if (!fs.existsSync(outputRoot)) {
-  fs.mkdirSync(outputRoot, { recursive: true });
-}
+export type GeneratedFile = { relativePath: string; content: string };
 
-const buildClass = (
-  c: Class,
-  refDataAssociations: Association[],
-  collectionAssociations: Association[],
-): string => {
-  let classContent = '';
-  if (c.parent?.name)
-    classContent = `import { ${c.parent?.name} } from '../${c.parent?.namespace}/${c.parent?.name}';\n`;
-  for (const associaton of refDataAssociations) {
-    classContent += `import { ${associaton.target.class.name} } from '../${associaton.target.class.namespace}/${associaton.target.class.name}';\n`;
-  }
-  for (const associaton of collectionAssociations) {
-    classContent += `import { ${associaton.target.class.name} } from '../${associaton.target.class.namespace}/${associaton.target.class.name}';\n`;
-  }
-  classContent += '\n';
-
-  if (c.parent?.name) {
-    classContent += `export class ${c.name} extends ${
-      c.parent?.name ?? 'baseclass'
+const typeScriptType = (type: ModelType): string => {
+    switch (type.kind) {
+        case "string": return "string";
+        case "integer":
+        case "decimal": return "number";
+        case "boolean": return "boolean";
+        case "date":
+        case "dateTime": return "Date";
     }
-   {\n`;
-  } else {
-    classContent += `export class ${c.name} {\n`;
-  }
-  for (const a of c.attributes) {
-    const theType = ModelTypeToCodeType(a.type, 'typescript');
-
-    if (theType === 'string') {
-      classContent += `  private _${a.name}: string = '';\n`;
-    }
-    if (theType === 'number') {
-      classContent += `  private _${a.name}: number = 0;\n`;
-    }
-    if (theType === 'boolean') {
-      classContent += `  private _${a.name}: boolean = false;\n`;
-    }
-    if (theType === 'Date') {
-      classContent += `  private _${a.name}: Date = new Date;\n`;
-    }
-  }
-  for (const assoc of refDataAssociations) {
-    classContent += `  private _${assoc.target.role}: ${assoc.target.class.name} | null = null;\n`;
-  }
-  for (const assoc of collectionAssociations) {
-    classContent += `  private _${assoc.target.role}: ${assoc.target.class.name}[] = [];\n`;
-  }
-
-  classContent += '\n';
-
-  if (c.parent?.name) {
-    classContent += `  constructor(...args: unknown[]) {\n`;
-    classContent += `    super(...args);\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-  } else {
-    classContent += `  constructor(...args: unknown[]) {\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-  }
-
-  classContent += `  toString(): string {\n`;
-  classContent += `    let retval = \`\${this.constructor.name}:\n\`;\n`;
-  classContent += `    for (const prop in this) {\n`;
-  classContent += `      if (Object.prototype.hasOwnProperty.call(this, prop)) {\n`;
-  classContent += `        const value = this[prop];\n`;
-  classContent += `        if (value === null || value === undefined) {\n`;
-  classContent += `          retval += \`   \${prop} = \${value}\\n\`;\n`;
-  classContent += `        } else if (typeof value === 'object') {\n`;
-  classContent += `          retval += \`   \${prop} = \\n   \${value.toString()}\\n\`;\n`;
-  classContent += `        } else {\n`;
-  classContent += `          retval += \`   \${prop} = \${value}\\n\`;\n`;
-  classContent += `        }\n`;
-  classContent += `      }\n`;
-  classContent += `    }\n`;
-  classContent += `    return retval;\n`;
-  classContent += `  }\n`;
-  classContent += '\n';
-
-  for (const a of c.attributes) {
-    classContent += `  // Getter and setter for ${a.name}\n`;
-    classContent += `  public get ${a.name}(): ${ModelTypeToCodeType(
-      a.type,
-      'typescript',
-    )} {\n`;
-    classContent += `    return this._${a.name};\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-    classContent += `  public set ${a.name}(value: ${ModelTypeToCodeType(
-      a.type,
-      'typescript',
-    )}) {\n`;
-    classContent += `    this._${a.name} = value;\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-  }
-
-  for (const assoc of refDataAssociations) {
-    classContent += `  // Getter and setter for ${assoc.target.role}\n`;
-    classContent += `  public get ${assoc.target.role}(): ${assoc.target.class.name} | null {\n`;
-    classContent += `    return this._${assoc.target.role};\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-    classContent += `  public set ${assoc.target.role}(value: ${assoc.target.class.name} | null) {\n`;
-    classContent += `    this._${assoc.target.role} = value;\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-  }
-
-  for (const assoc of collectionAssociations) {
-    classContent += `  // Getter and setter for ${assoc.target.role}\n`;
-    classContent += `  public get ${assoc.target.role}(): ${assoc.target.class.name}[] {\n`;
-    classContent += `    return this._${assoc.target.role};\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-    classContent += `  public set ${assoc.target.role}(value: ${assoc.target.class.name}[]) {\n`;
-    classContent += `    this._${assoc.target.role} = value;\n`;
-    classContent += `  }\n`;
-    classContent += '\n';
-  }
-
-  // create a public toJSON() method.
-  // return will be a JSON object with all attributes and associations of this class and its parent classes
-  classContent += `  public toJSON() {\n`;
-  classContent += `    const retval = {\n`;
-  if (c.parent?.name) {
-    classContent += `      ...super.toJSON(),\n`;
-  }
-  for (const a of c.attributes) {
-    classContent += `      ${a.name}: this.${a.name},\n`;
-  }
-  for (const assoc of refDataAssociations) {
-    classContent += `      ${assoc.target.role}: this.${assoc.target.role},\n`;
-  }
-  for (const assoc of collectionAssociations) {
-    classContent += `      ${assoc.target.role}: this.${assoc.target.role},\n`;
-  }
-  classContent += `    };\n`;
-
-  classContent += `    return retval;\n`;
-
-  classContent += `  };\n`;
-
-  classContent += '}\n';
-
-  return classContent;
 };
 
-// printModel(model);
-for (const c of model.classes) {
-  const refDataAssociations = model.associations.filter(
-    (a) =>
-      a.source.multiplicity === '*' &&
-      a.target.multiplicity === '1' &&
-      a.source.class.name === c.name, // this class is the parent
-  );
+const attributeType = (attribute: ModelAttribute): string => {
+    const type = typeScriptType(attribute.type);
+    return attribute.nullable ? `${type} | null` : type;
+};
 
-  // find 1 to * (e.g. class with collections)
-  const collectionAssociations = model.associations.filter(
-    (a) =>
-      (a.source.multiplicity === '0' || a.source.multiplicity === '1') &&
-      a.target.multiplicity === '*' &&
-      a.source.class.name === c.name, // this class is the parent
-  );
+const attributeInitialValue = (attribute: ModelAttribute): string => {
+    if (attribute.nullable) return "null";
+    switch (attribute.type.kind) {
+        case "string": return "''";
+        case "integer":
+        case "decimal": return "0";
+        case "boolean": return "false";
+        case "date":
+        case "dateTime": return "new Date()";
+    }
+};
 
-  const classContent = buildClass(
-    c,
-    refDataAssociations,
-    collectionAssociations,
-  );
+const associationRole = (association: ModelAssociation): string => {
+    if (!association.target.role) throw new Error(`Association '${association.id}' has no target role.`);
+    return association.target.role;
+};
 
-  const filePath = outputRoot + '/' + c.namespace;
-  if (!fs.existsSync(filePath)) {
-    fs.mkdirSync(filePath, { recursive: true });
-  }
-  fs.writeFileSync(filePath + '/' + c.name + '.ts', classContent, 'utf8');
-}
+const importPath = (from: ModelClass, target: ModelClass): string =>
+    from.namespace === target.namespace ? `./${target.name}` : `../${target.namespace}/${target.name}`;
+
+export const renderTypeScriptClass = (model: ResolvedModel, modelClass: ModelClass): string => {
+    const parent = getParent(model, modelClass);
+    const references = getReferenceAssociations(model, modelClass);
+    const collections = getCollectionAssociations(model, modelClass);
+    const imports = new Map<string, string>();
+
+    if (parent) imports.set(parent.id, `import { ${parent.name} } from '${importPath(modelClass, parent)}';`);
+    for (const association of [...references, ...collections]) {
+        const target = getAssociationTargetClass(model, association);
+        if (target.id !== modelClass.id) imports.set(target.id, `import { ${target.name} } from '${importPath(modelClass, target)}';`);
+    }
+
+    let content = imports.size ? `${[...imports.values()].join("\n")}\n\n` : "";
+    content += parent ? `export class ${modelClass.name} extends ${parent.name} {\n` : `export class ${modelClass.name} {\n`;
+
+    for (const attribute of modelClass.attributes) {
+        content += `  private _${attribute.name}: ${attributeType(attribute)} = ${attributeInitialValue(attribute)};\n`;
+    }
+    for (const association of references) {
+        const target = getAssociationTargetClass(model, association);
+        const role = associationRole(association);
+        content += `  private _${role}: ${target.name} | null = null;\n`;
+    }
+    for (const association of collections) {
+        const target = getAssociationTargetClass(model, association);
+        const role = associationRole(association);
+        content += `  private _${role}: ${target.name}[] = [];\n`;
+    }
+
+    content += "\n  constructor(...args: unknown[]) {\n";
+    if (parent) content += "    super(...args);\n";
+    content += "  }\n\n";
+    content += "  toString(): string {\n";
+    content += "    let result = `${this.constructor.name}:\\n`;\n";
+    content += "    for (const [property, value] of Object.entries(this)) {\n";
+    content += "      result += `   ${property} = ${String(value)}\\n`;\n";
+    content += "    }\n    return result;\n  }\n\n";
+
+    for (const attribute of modelClass.attributes) {
+        const type = attributeType(attribute);
+        content += `  public get ${attribute.name}(): ${type} {\n    return this._${attribute.name};\n  }\n\n`;
+        content += `  public set ${attribute.name}(value: ${type}) {\n    this._${attribute.name} = value;\n  }\n\n`;
+    }
+    for (const association of references) {
+        const target = getAssociationTargetClass(model, association);
+        const role = associationRole(association);
+        content += `  public get ${role}(): ${target.name} | null {\n    return this._${role};\n  }\n\n`;
+        content += `  public set ${role}(value: ${target.name} | null) {\n    this._${role} = value;\n  }\n\n`;
+    }
+    for (const association of collections) {
+        const target = getAssociationTargetClass(model, association);
+        const role = associationRole(association);
+        content += `  public get ${role}(): ${target.name}[] {\n    return this._${role};\n  }\n\n`;
+        content += `  public set ${role}(value: ${target.name}[]) {\n    this._${role} = value;\n  }\n\n`;
+    }
+
+    content += "  public toJSON() {\n    return {\n";
+    if (parent) content += "      ...super.toJSON(),\n";
+    for (const attribute of modelClass.attributes) content += `      ${attribute.name}: this.${attribute.name},\n`;
+    for (const association of [...references, ...collections]) {
+        const role = associationRole(association);
+        content += `      ${role}: this.${role},\n`;
+    }
+    content += "    };\n  }\n}\n";
+    return content;
+};
+
+export const generateTypeScriptModels = (model: ResolvedModel): GeneratedFile[] =>
+    model.document.classes.map((modelClass) => ({
+        relativePath: path.join(modelClass.namespace, `${modelClass.name}.ts`),
+        content: renderTypeScriptClass(model, modelClass),
+    }));
+
+export const writeGeneratedFiles = (outputRoot: string, files: readonly GeneratedFile[]): void => {
+    for (const file of files) {
+        const filePath = path.join(outputRoot, file.relativePath);
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, file.content, "utf8");
+    }
+};
+
+const main = (): void => {
+    const [modelPath = "./output/canonical-model.json", outputRoot = "./output/typescript/model"] = process.argv.slice(2);
+    writeGeneratedFiles(outputRoot, generateTypeScriptModels(loadModel(modelPath)));
+};
+
+if (require.main === module) main();
