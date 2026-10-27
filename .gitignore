@@ -12,3 +12,4 @@ tempqueries.txt
 .DS_Store
 person.db
 person.session.sql 
+coverage/

@@ -139,13 +139,6 @@ export const ModelTypeToCodeType = (
         if (codeLanguage === "zod") return "date";
         if (codeLanguage === "html") return "date";
     }
-    if (modeltype === "date") {
-        if (codeLanguage === "python") return "date";
-        if (codeLanguage === "typescript") return "Date";
-        if (codeLanguage === "csharp") return "DateTime";
-        if (codeLanguage === "zod") return "date";
-        if (codeLanguage === "html") return "date";
-    }
     return modeltype;
 };
 
